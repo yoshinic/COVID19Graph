@@ -1,1 +1,3 @@
-print("Hello, world!")
+import AWSLambdaRuntime
+
+Lambda.run(LambdaHandler.init)
