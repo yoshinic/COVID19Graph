@@ -81,3 +81,16 @@ extension SeverityController {
         add(date: a[0].replacingOccurrences(of: "/", with: "-"), number: a[1])
     }
 }
+
+extension SeverityController {
+    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
+        batch(
+            a.map {
+                Model(
+                    date: $0[0].replacingOccurrences(of: "/", with: "-"),
+                    number: $0[1]
+                )
+            }
+        )
+    }
+}

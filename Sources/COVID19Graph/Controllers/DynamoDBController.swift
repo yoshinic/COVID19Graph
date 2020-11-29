@@ -2,19 +2,17 @@ import Foundation
 import NIO
 import SotoDynamoDB
 
-protocol _DynamoDBController {
+protocol DynamoDBController {
     associatedtype Model: DynamoDBModelWithTable
     var db: DynamoDB { get }
     init(db: DynamoDB)
     func createTable(_ ifNotExists: Bool, on eventLoop: EventLoop) -> EventLoopFuture<DynamoDB.CreateTableOutput?>
-}
-
-protocol DynamoDBController: _DynamoDBController {
     func add(_ a: [String]) -> EventLoopFuture<Model>
+    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]>
 }
 
 // Create Table
-extension _DynamoDBController {
+extension DynamoDBController {
     func createTable(
         _ ifNotExists: Bool,
         on eventLoop: EventLoop
@@ -53,7 +51,7 @@ extension _DynamoDBController {
     }
 }
 
-extension _DynamoDBController {
+extension DynamoDBController {
     func get(_ input: DynamoDB.GetItemInput) -> EventLoopFuture<Model> {
         db
             .getItem(input)
@@ -77,5 +75,47 @@ extension _DynamoDBController {
                 )
             )
             .map { _ in model }
+    }
+}
+
+extension DynamoDBController {
+    private func _batch(_ models: [Model]) -> EventLoopFuture<DynamoDB.BatchWriteItemOutput> {
+        var models = models
+        let currentDate = Date()
+        for i in (0..<models.count) {
+            models[i].createdAt = currentDate
+            models[i].updatedAt = currentDate
+        }
+        return db.batchWriteItem(
+            DynamoDB.BatchWriteItemInput(
+                requestItems: [
+                    Model.tableName: models.map {
+                        DynamoDB.WriteRequest(
+                            deleteRequest: nil,
+                            putRequest: DynamoDB.PutRequest(item: $0.dynamoDbDictionary)
+                        )
+                    }
+                ]
+            )
+        )
+    }
+    
+    func batch(_ models: [Model]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
+        let batchMaximumAllowedValue: Int = 25
+        
+        var lowerIndex: Int = 0
+        var upperIndex: Int
+        var a: [[Model]] = []
+        while lowerIndex < models.count {
+            if lowerIndex + batchMaximumAllowedValue < models.count {
+                upperIndex = lowerIndex + batchMaximumAllowedValue
+            } else {
+                upperIndex = models.count
+            }
+            a.append(models[lowerIndex..<upperIndex].map { $0 })
+            lowerIndex += batchMaximumAllowedValue
+        }
+        
+        return a.map { _batch($0) }.flatten(on: db.eventLoopGroup.next())
     }
 }

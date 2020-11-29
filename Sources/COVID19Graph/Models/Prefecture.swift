@@ -7,7 +7,8 @@ struct Prefecture: DynamoDBModelWithTable {
     static let tableName: String = "prefectures"
     
     var date: String = ""
-    var prefectureNameID: String = ""
+    var prefectureNameJ: String = ""
+    var prefectureNameE: String = ""
     var positive: String = ""
     var peopleTested: String = ""
     var hospitalized: String = ""
@@ -21,7 +22,8 @@ struct Prefecture: DynamoDBModelWithTable {
     
     struct DynamoDBField {
         static let date = "date"
-        static let prefectureNameID = "prefecture_name_id"
+        static let prefectureNameJ = "prefecture_name_j"
+        static let prefectureNameE = "prefecture_name_e"
         static let positive = "positive"
         static let peopleTested = "people_tested"
         static let hospitalized = "hospitalized"
@@ -46,11 +48,19 @@ extension Prefecture {
         }
         
         if
-            let prefectureNameIDAtValue = dic[DynamoDBField.prefectureNameID],
-            case let .s(prefectureNameID) = prefectureNameIDAtValue,
-            !prefectureNameID.isEmpty
+            let prefectureNameJAtValue = dic[DynamoDBField.prefectureNameJ],
+            case let .s(prefectureNameJ) = prefectureNameJAtValue,
+            !prefectureNameJ.isEmpty
         {
-            self.prefectureNameID = prefectureNameID
+            self.prefectureNameJ = prefectureNameJ
+        }
+        
+        if
+            let prefectureNameEAtValue = dic[DynamoDBField.prefectureNameE],
+            case let .s(prefectureNameE) = prefectureNameEAtValue,
+            !prefectureNameE.isEmpty
+        {
+            self.prefectureNameE = prefectureNameE
         }
         
         if
@@ -135,8 +145,11 @@ extension Prefecture {
         if !date.isEmpty {
             dic[DynamoDBField.date] = .s(date)
         }
-        if !prefectureNameID.isEmpty {
-            dic[DynamoDBField.prefectureNameID] = .s(prefectureNameID)
+        if !prefectureNameJ.isEmpty {
+            dic[DynamoDBField.prefectureNameJ] = .s(prefectureNameJ)
+        }
+        if !prefectureNameE.isEmpty {
+            dic[DynamoDBField.prefectureNameE] = .s(prefectureNameE)
         }
         if !positive.isEmpty {
             dic[DynamoDBField.positive] = .s(positive)
@@ -168,14 +181,14 @@ extension Prefecture {
     static var attributeDefinitions: [DynamoDB.AttributeDefinition] {
         [
             .init(attributeName: DynamoDBField.date, attributeType: .s),
-            .init(attributeName: DynamoDBField.prefectureNameID, attributeType: .s),
+            .init(attributeName: DynamoDBField.prefectureNameJ, attributeType: .s),
         ]
     }
     
     static var keySchema: [DynamoDB.KeySchemaElement] {
         [
             .init(attributeName: DynamoDBField.date, keyType: .hash),
-            .init(attributeName: DynamoDBField.prefectureNameID, keyType: .range),
+            .init(attributeName: DynamoDBField.prefectureNameJ, keyType: .range),
         ]
     }
 }

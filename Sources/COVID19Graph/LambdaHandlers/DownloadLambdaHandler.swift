@@ -32,7 +32,6 @@ struct DownloadLambdaHandler: EventLoopLambdaHandler {
     let pcrCaseController: PCRCaseController
     let pcrPositiveController: PCRPositiveController
     let pcrTestController: PCRTestController
-    let prefectureNameController: PrefectureNameController
     let prefectureController: PrefectureController
     let recoveryController: RecoveryController
     let severityController: SeverityController
@@ -47,17 +46,13 @@ struct DownloadLambdaHandler: EventLoopLambdaHandler {
         self.pcrCaseController = .init(db: db)
         self.pcrPositiveController = .init(db: db)
         self.pcrTestController = .init(db: db)
-        self.prefectureNameController = .init(db: db)
         self.prefectureController = .init(db: db)
         self.recoveryController = .init(db: db)
         self.severityController = .init(db: db)
     }
     
     func handle(context: Lambda.Context, event: In) -> EventLoopFuture<Out> {
-        prefectureNameController
-            .createTable(on: context.eventLoop)
-            .transform(to: ())
-            .flatMap { _handle(deathController, event.death, on: context.eventLoop) }
+        _handle(deathController, event.death, on: context.eventLoop)
             .flatMap { _handle(demographyController, event.demography, on: context.eventLoop) }
             .flatMap { _handle(ernController, event.ern, on: context.eventLoop) }
             .flatMap { _handle(hospitalizationController, event.hospitalization, on: context.eventLoop) }
@@ -97,7 +92,7 @@ struct DownloadLambdaHandler: EventLoopLambdaHandler {
             }
             .map { $0.components(separatedBy: .newlines).filter { !$0.isEmpty }.dropFirst().map { $0 } }
             .mapEach { $0.components(separatedBy: ",") }
-            .flatMapEach(on: eventLoop) { controller.add($0) }
+            .flatMap { controller.batch($0) }
             .transform(to: ())
     }
 }

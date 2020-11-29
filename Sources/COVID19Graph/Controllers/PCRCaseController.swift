@@ -158,3 +158,21 @@ extension PCRCaseController {
         )
     }
 }
+
+extension PCRCaseController {
+    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
+        batch(
+            a.map {
+                Model(
+                    date: $0[0].replacingOccurrences(of: "/", with: "-"),
+                    national: $0[1],
+                    quarantine: $0[2],
+                    local: $0[3],
+                    private: $0[4],
+                    university: $0[5],
+                    medical: $0[6]
+                )
+            }
+        )
+    }
+}

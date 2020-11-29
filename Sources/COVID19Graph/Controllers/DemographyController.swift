@@ -163,3 +163,20 @@ extension DemographyController {
         )
     }
 }
+
+extension DemographyController {
+    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
+        batch(
+            a.map {
+                Model(
+                    date: "\($0[0])-\($0[1])-\($0[2])",
+                    ageGroup: $0[3],
+                    positive: $0[4],
+                    hospitalized: $0[5],
+                    serious: $0[6],
+                    death: $0[7]
+                )
+            }
+        )
+    }
+}

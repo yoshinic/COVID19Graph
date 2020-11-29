@@ -7,22 +7,20 @@ struct PrefectureController: DynamoDBController {
     typealias Model = Prefecture
     
     let db: DynamoDB
-    let prefectureNameController: PrefectureNameController
     
     init(db: DynamoDB) {
         self.db = db
-        self.prefectureNameController = .init(db: db)
     }
     
     func get(
         _ date: String,
-        _ prefectureNameID: String
+        _ prefectureNameJ: String
     ) -> EventLoopFuture<Model> {
         get(
             .init(
                 key: [
                     Model.DynamoDBField.date: .s(date),
-                    Model.DynamoDBField.prefectureNameID: .s(prefectureNameID)
+                    Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
                 ],
                 tableName: Model.tableName
             )
@@ -31,7 +29,8 @@ struct PrefectureController: DynamoDBController {
     
     func create(
         date: String,
-        prefectureNameID: String,
+        prefectureNameJ: String,
+        prefectureNameE: String,
         positive: String,
         peopleTested: String,
         hospitalized: String,
@@ -43,7 +42,8 @@ struct PrefectureController: DynamoDBController {
         create(
             .init(
                 date: date,
-                prefectureNameID: prefectureNameID,
+                prefectureNameJ: prefectureNameJ,
+                prefectureNameE: prefectureNameE,
                 positive: positive,
                 peopleTested: peopleTested,
                 hospitalized: hospitalized,
@@ -57,7 +57,8 @@ struct PrefectureController: DynamoDBController {
     
     func update(
         date: String,
-        prefectureNameID: String,
+        prefectureNameJ: String,
+        prefectureNameE: String,
         positive: String,
         peopleTested: String,
         hospitalized: String,
@@ -68,6 +69,7 @@ struct PrefectureController: DynamoDBController {
     ) -> EventLoopFuture<Model> {
         let input = DynamoDB.UpdateItemInput(
             expressionAttributeNames: [
+                "#prefectureNameE": Model.DynamoDBField.prefectureNameE,
                 "#positive": Model.DynamoDBField.positive,
                 "#peopleTested": Model.DynamoDBField.peopleTested,
                 "#hospitalized": Model.DynamoDBField.hospitalized,
@@ -78,6 +80,7 @@ struct PrefectureController: DynamoDBController {
                 "#updatedAt": Model.DynamoDBField.updatedAt
             ],
             expressionAttributeValues: [
+                ":prefectureNameE": .s(prefectureNameE),
                 ":positive": .s(positive),
                 ":peopleTested": .s(peopleTested),
                 ":hospitalized": .s(hospitalized),
@@ -89,12 +92,13 @@ struct PrefectureController: DynamoDBController {
             ],
             key: [
                 Model.DynamoDBField.date: .s(date),
-                Model.DynamoDBField.prefectureNameID: .s(prefectureNameID)
+                Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
             ],
             returnValues: .allNew,
             tableName: Model.tableName,
             updateExpression: """
                 SET \
+                #prefectureNameE = :prefectureNameE, \
                 #positive = :positive, \
                 #peopleTested = :peopleTested, \
                 #hospitalized = :hospitalized, \
@@ -106,19 +110,19 @@ struct PrefectureController: DynamoDBController {
             """
         )
         
-        return db.updateItem(input).flatMap { _ in self.get(date, prefectureNameID) }
+        return db.updateItem(input).flatMap { _ in self.get(date, prefectureNameJ) }
     }
     
     func delete(
         _ date: String,
-        _ prefectureNameID: String
+        _ prefectureNameJ: String
     ) -> EventLoopFuture<Void> {
         db
             .deleteItem(
                 .init(
                     key: [
                         Model.DynamoDBField.date: .s(date),
-                        Model.DynamoDBField.prefectureNameID: .s(prefectureNameID)
+                        Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
                     ],
                     tableName: Model.tableName
                 )
@@ -131,7 +135,8 @@ struct PrefectureController: DynamoDBController {
 extension PrefectureController {
     func add(
         date: String,
-        prefectureNameID: String,
+        prefectureNameJ: String,
+        prefectureNameE: String,
         positive: String,
         peopleTested: String,
         hospitalized: String,
@@ -145,7 +150,7 @@ extension PrefectureController {
                 .init(
                     key: [
                         Model.DynamoDBField.date: .s(date),
-                        Model.DynamoDBField.prefectureNameID: .s(prefectureNameID)
+                        Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
                     ],
                     tableName: Model.tableName
                 )
@@ -154,7 +159,8 @@ extension PrefectureController {
                 if let _ = output.item {
                     return update(
                         date: date,
-                        prefectureNameID: prefectureNameID,
+                        prefectureNameJ: prefectureNameJ,
+                        prefectureNameE: prefectureNameE,
                         positive: positive,
                         peopleTested: peopleTested,
                         hospitalized: hospitalized,
@@ -166,7 +172,8 @@ extension PrefectureController {
                 } else {
                     return create(
                         date: date,
-                        prefectureNameID: prefectureNameID,
+                        prefectureNameJ: prefectureNameJ,
+                        prefectureNameE: prefectureNameE,
                         positive: positive,
                         peopleTested: peopleTested,
                         hospitalized: hospitalized,
@@ -182,20 +189,38 @@ extension PrefectureController {
 
 extension PrefectureController {
     func add(_ a: [String]) -> EventLoopFuture<Prefecture> {
-        prefectureNameController
-            .add(name: a[3], eName: a[4])
-            .flatMap { prefectureName in
-                add(
-                    date: "\(a[0])-\(a[1])-\(a[2])",
-                    prefectureNameID: prefectureName.id,
-                    positive: a[5],
-                    peopleTested: a[6],
-                    hospitalized: a[7],
-                    serious: a[8],
-                    discharged: a[9],
-                    deaths: a[10],
-                    effectiveReproductionNumber: a[11]
+        add(
+            date: "\(a[0])-\(a[1])-\(a[2])",
+            prefectureNameJ: a[3],
+            prefectureNameE: a[4],
+            positive: a[5],
+            peopleTested: a[6],
+            hospitalized: a[7],
+            serious: a[8],
+            discharged: a[9],
+            deaths: a[10],
+            effectiveReproductionNumber: a[11]
+        )
+    }
+}
+
+extension PrefectureController {
+    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
+        batch(
+            a.map {
+                Model(
+                    date: "\($0[0])-\($0[1])-\($0[2])",
+                    prefectureNameJ: $0[3],
+                    prefectureNameE: $0[4],
+                    positive: $0[5],
+                    peopleTested: $0[6],
+                    hospitalized: $0[7],
+                    serious: $0[8],
+                    discharged: $0[9],
+                    deaths: $0[10],
+                    effectiveReproductionNumber: $0[11]
                 )
             }
+        )
     }
 }
