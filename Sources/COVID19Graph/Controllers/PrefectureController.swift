@@ -220,7 +220,9 @@ extension PrefectureController {
                     deaths: $0[10],
                     effectiveReproductionNumber: $0[11]
                 )
-            }
+            },
+            batchMaximumValue: batchMaximumAllowedValue,
+            waittime: 1
         )
     }
 }

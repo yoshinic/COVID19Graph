@@ -105,7 +105,8 @@ extension DynamoDBController {
     
     func batch(
         _ models: [Model],
-        batchMaximumValue: Int = 25
+        batchMaximumValue: Int = 25,
+        waittime: UInt32 = 0
     ) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
         var batchMaximumValue = batchMaximumValue
         if batchMaximumValue > batchMaximumAllowedValue { batchMaximumValue = batchMaximumAllowedValue }
@@ -122,10 +123,16 @@ extension DynamoDBController {
             a.append(models[lowerIndex..<upperIndex].map { $0 })
             lowerIndex += batchMaximumValue
         }
+        
+        guard waittime > 0 else {
+            return a.map { _batch($0) }.flatten(on: db.eventLoopGroup.next())
+        }
+        
         return a.reduce(into: db.eventLoopGroup.future([])) { f, e in
             f = f.flatMap { _a in
                 var _a = _a
                 return _batch(e).map {
+                    sleep(waittime)
                     _a.append($0)
                     return _a
                 }
