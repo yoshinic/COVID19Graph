@@ -121,6 +121,14 @@ extension Demography {
             dic[DynamoDBField.death] = .s(death)
         }
         
+        if let createdAt = createdAt {
+            dic[DynamoDBField.createdAt] = .s(Utils.iso8601Formatter.string(from: createdAt))
+        }
+        
+        if let updatedAt = updatedAt {
+            dic[DynamoDBField.updatedAt] = .s(Utils.iso8601Formatter.string(from: updatedAt))
+        }
+        
         return dic
     }
 }
