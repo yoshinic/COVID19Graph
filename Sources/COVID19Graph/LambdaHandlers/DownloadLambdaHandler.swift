@@ -21,7 +21,7 @@ struct Output: Codable {
     let result: String
 }
 
-struct LambdaHandler: EventLoopLambdaHandler {
+struct DownloadLambdaHandler: EventLoopLambdaHandler {
     typealias In = Input
     typealias Out = Output
     
@@ -102,12 +102,15 @@ struct LambdaHandler: EventLoopLambdaHandler {
     }
 }
 
-extension LambdaHandler {
-    static func createDynamoDBClient(on eventLoop: EventLoop) -> SotoDynamoDB.DynamoDB {
+extension DownloadLambdaHandler {
+    static func createDynamoDBClient(
+        endpoint: String? = nil,
+        on eventLoop: EventLoop
+    ) -> SotoDynamoDB.DynamoDB {
         let accessKeyId = Lambda.env("ACCESS_KEY_ID") ?? "dummyAccessKeyId"
         let secretAccessKey = Lambda.env("SECRET_ACCESS_KEY") ?? "dummySecretAccessKey"
         let region = Lambda.env("REGION") ?? Region.uswest2.rawValue
-        let endpoint = Lambda.env("ENDPOINT") ?? "http://localhost:8000"
+        let endpoint = Lambda.env("ENDPOINT") ?? endpoint
         
         let httpClient: AsyncHTTPClient.HTTPClient = .init(
             eventLoopGroupProvider: .shared(eventLoop),
