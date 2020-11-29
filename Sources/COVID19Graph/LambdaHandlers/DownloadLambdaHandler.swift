@@ -112,7 +112,7 @@ extension DownloadLambdaHandler {
             configuration: .init(
                 timeout: .init(
                     connect: .seconds(30),
-                    read: .seconds(120)
+                    read: .seconds(30)
                 )
             )
         )
@@ -128,7 +128,7 @@ extension DownloadLambdaHandler {
             ),
             region: .init(rawValue: region),
             endpoint: endpoint,
-            timeout: .seconds(120)
+            timeout: .seconds(30)
         )
     }
 }

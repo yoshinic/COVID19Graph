@@ -79,6 +79,9 @@ extension DynamoDBController {
 }
 
 extension DynamoDBController {
+    
+    var batchMaximumAllowedValue: Int { 25 }
+    
     private func _batch(_ models: [Model]) -> EventLoopFuture<DynamoDB.BatchWriteItemOutput> {
         var models = models
         let currentDate = Date()
@@ -100,22 +103,33 @@ extension DynamoDBController {
         )
     }
     
-    func batch(_ models: [Model]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
-        let batchMaximumAllowedValue: Int = 25
+    func batch(
+        _ models: [Model],
+        batchMaximumValue: Int = 25
+    ) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
+        var batchMaximumValue = batchMaximumValue
+        if batchMaximumValue > batchMaximumAllowedValue { batchMaximumValue = batchMaximumAllowedValue }
         
         var lowerIndex: Int = 0
         var upperIndex: Int
         var a: [[Model]] = []
         while lowerIndex < models.count {
-            if lowerIndex + batchMaximumAllowedValue < models.count {
-                upperIndex = lowerIndex + batchMaximumAllowedValue
+            if lowerIndex + batchMaximumValue < models.count {
+                upperIndex = lowerIndex + batchMaximumValue
             } else {
                 upperIndex = models.count
             }
             a.append(models[lowerIndex..<upperIndex].map { $0 })
-            lowerIndex += batchMaximumAllowedValue
+            lowerIndex += batchMaximumValue
         }
-        
-        return a.map { _batch($0) }.flatten(on: db.eventLoopGroup.next())
+        return a.reduce(into: db.eventLoopGroup.future([])) { f, e in
+            f = f.flatMap { _a in
+                var _a = _a
+                return _batch(e).map {
+                    _a.append($0)
+                    return _a
+                }
+            }
+        }
     }
 }
