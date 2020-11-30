@@ -21,7 +21,7 @@ struct Output: Codable {
     let result: String
 }
 
-struct DownloadLambdaHandler: EventLoopLambdaHandler {
+struct DownloadLambdaHandler: DynamoDBLambdaHandler {
     typealias In = Input
     typealias Out = Output
     
@@ -94,41 +94,5 @@ struct DownloadLambdaHandler: EventLoopLambdaHandler {
             .mapEach { $0.components(separatedBy: ",") }
             .flatMap { controller.batch($0) }
             .transform(to: ())
-    }
-}
-
-extension DownloadLambdaHandler {
-    static func createDynamoDBClient(
-        endpoint: String? = nil,
-        on eventLoop: EventLoop
-    ) -> SotoDynamoDB.DynamoDB {
-        let accessKeyId = Lambda.env("ACCESS_KEY_ID") ?? "dummyAccessKeyId"
-        let secretAccessKey = Lambda.env("SECRET_ACCESS_KEY") ?? "dummySecretAccessKey"
-        let region = Lambda.env("REGION") ?? Region.uswest2.rawValue
-        let endpoint = Lambda.env("ENDPOINT") ?? endpoint
-        
-        let httpClient: AsyncHTTPClient.HTTPClient = .init(
-            eventLoopGroupProvider: .shared(eventLoop),
-            configuration: .init(
-                timeout: .init(
-                    connect: .seconds(30),
-                    read: .seconds(30)
-                )
-            )
-        )
-        
-        return .init(
-            client: .init(
-                credentialProvider: .static(
-                    accessKeyId: accessKeyId,
-                    secretAccessKey: secretAccessKey,
-                    sessionToken: nil
-                ),
-                httpClientProvider: .shared(httpClient)
-            ),
-            region: .init(rawValue: region),
-            endpoint: endpoint,
-            timeout: .seconds(30)
-        )
     }
 }

@@ -13,28 +13,43 @@ struct WebsiteOutput: Codable {
     let body: String?
 }
 
-struct WebsiteLambdaHandler: EventLoopLambdaHandler {
+struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
     typealias In = WebsiteInput
     typealias Out = WebsiteOutput
     
+    let deathController: DeathController
+    
+    init(context: Lambda.InitializationContext) {
+        let db = Self.createDynamoDBClient(on: context.eventLoop)
+        self.deathController = .init(db: db)
+    }
+    
     func handle(context: Lambda.Context, event: In) -> EventLoopFuture<Out> {
-        context.eventLoop.makeSucceededFuture(
-            .init(
-                statusCode: .ok,
-                headers: [
-                    "Content-Type": "text/html",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET",
-                    "Access-Control-Allow-Credentials": "true",
-                ],
-                body: html
-            )
-        )
+        deathController
+            .db
+            .scan(.init(tableName: Death.tableName))
+            .map { $0.items ?? [] }
+            .flatMapEachThrowing { try Death(dic: $0) }
+            .mapEach { (date: $0.date, number: $0.number) }
+            .map { $0.sorted { $0.date < $1.date } }
+            .map { script($0) }
+            .map {
+                .init(
+                    statusCode: .ok,
+                    headers: [
+                        "Content-Type": "text/html",
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Methods": "GET",
+                        "Access-Control-Allow-Credentials": "true",
+                    ],
+                    body: html($0)
+                )
+            }
     }
 }
 
 extension WebsiteLambdaHandler {
-    var script: String {
+    func script(_ data: [(date: String, number: String)]) -> String {
         """
         var ctx = document.getElementById('myChart').getContext('2d');
         var chart = new Chart(ctx, {
@@ -43,12 +58,12 @@ extension WebsiteLambdaHandler {
 
             // The data for our dataset
             data: {
-                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                labels: [\(data.map { "'\($0.date)'" }.joined(separator: ", "))],
                 datasets: [{
                     label: 'My First dataset',
                     backgroundColor: 'rgb(255, 99, 132)',
                     borderColor: 'rgb(255, 99, 132)',
-                    data: [0, 10, 5, 2, 20, 30, 45]
+                    data: [\(data.map { $0.number }.joined(separator: ", "))]
                 }]
             },
 
@@ -58,7 +73,7 @@ extension WebsiteLambdaHandler {
         """
     }
     
-    var html: String {
+    func html(_ script: String) -> String {
         """
         <!DOCTYPE html>
         <html>

@@ -7,7 +7,7 @@ struct LambdaHandler {
         case "download":
             Lambda.run(DownloadLambdaHandler.init)
         case "website":
-            Lambda.run(WebsiteLambdaHandler())
+            Lambda.run(WebsiteLambdaHandler.init)
         default: break
         }
     }
