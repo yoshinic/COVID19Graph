@@ -3,9 +3,19 @@ import AWSLambdaRuntime
 import AWSLambdaEvents
 import NIO
 
+struct WebsiteInput: Codable {
+    
+}
+
+struct WebsiteOutput: Codable {
+    let statusCode: HTTPResponseStatus
+    let headers: HTTPHeaders?
+    let body: String?
+}
+
 struct WebsiteLambdaHandler: EventLoopLambdaHandler {
-    typealias In = APIGateway.Request
-    typealias Out = APIGateway.Response
+    typealias In = WebsiteInput
+    typealias Out = WebsiteOutput
     
     func handle(context: Lambda.Context, event: In) -> EventLoopFuture<Out> {
         context.eventLoop.makeSucceededFuture(
@@ -17,9 +27,7 @@ struct WebsiteLambdaHandler: EventLoopLambdaHandler {
                     "Access-Control-Allow-Methods": "GET",
                     "Access-Control-Allow-Credentials": "true",
                 ],
-                multiValueHeaders: nil,
-                body: html,
-                isBase64Encoded: nil
+                body: html
             )
         )
     }
