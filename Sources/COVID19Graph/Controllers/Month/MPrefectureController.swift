@@ -14,13 +14,13 @@ struct MPrefectureController: DynamoDBController {
     
     func get(
         _ month: String,
-        _ dayOfTheWeek: String
+        _ prefectureName: String
     ) -> EventLoopFuture<Model> {
         get(
             .init(
                 key: [
                     Model.DynamoDBField.month: .s(month),
-                    Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
+                    Model.DynamoDBField.prefectureName: .s(prefectureName)
                 ],
                 tableName: Model.tableName
             )
@@ -29,7 +29,6 @@ struct MPrefectureController: DynamoDBController {
     
     func create(
         month: String,
-        dayOfTheWeek: String,
         prefectureName: String,
         positive: String,
         peopleTested: String,
@@ -42,7 +41,6 @@ struct MPrefectureController: DynamoDBController {
         create(
             .init(
                 month: month,
-                dayOfTheWeek: dayOfTheWeek,
                 prefectureName: prefectureName,
                 positive: positive,
                 peopleTested: peopleTested,
@@ -57,7 +55,6 @@ struct MPrefectureController: DynamoDBController {
     
     func update(
         month: String,
-        dayOfTheWeek: String,
         prefectureName: String,
         positive: String,
         peopleTested: String,
@@ -69,7 +66,6 @@ struct MPrefectureController: DynamoDBController {
     ) -> EventLoopFuture<Model> {
         let input = DynamoDB.UpdateItemInput(
             expressionAttributeNames: [
-                "#prefectureName": Model.DynamoDBField.prefectureName,
                 "#positive": Model.DynamoDBField.positive,
                 "#peopleTested": Model.DynamoDBField.peopleTested,
                 "#hospitalized": Model.DynamoDBField.hospitalized,
@@ -80,7 +76,6 @@ struct MPrefectureController: DynamoDBController {
                 "#updatedAt": Model.DynamoDBField.updatedAt
             ],
             expressionAttributeValues: [
-                ":prefectureName": .s(prefectureName),
                 ":positive": .s(positive),
                 ":peopleTested": .s(peopleTested),
                 ":hospitalized": .s(hospitalized),
@@ -92,13 +87,12 @@ struct MPrefectureController: DynamoDBController {
             ],
             key: [
                 Model.DynamoDBField.month: .s(month),
-                Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
+                Model.DynamoDBField.prefectureName: .s(prefectureName)
             ],
             returnValues: .allNew,
             tableName: Model.tableName,
             updateExpression: """
                 SET \
-                #prefectureName = :prefectureName, \
                 #positive = :positive, \
                 #peopleTested = :peopleTested, \
                 #hospitalized = :hospitalized, \
@@ -110,19 +104,19 @@ struct MPrefectureController: DynamoDBController {
             """
         )
         
-        return db.updateItem(input).flatMap { _ in self.get(month, dayOfTheWeek) }
+        return db.updateItem(input).flatMap { _ in self.get(month, prefectureName) }
     }
     
     func delete(
         _ month: String,
-        _ dayOfTheWeek: String
+        _ prefectureName: String
     ) -> EventLoopFuture<Void> {
         db
             .deleteItem(
                 .init(
                     key: [
                         Model.DynamoDBField.month: .s(month),
-                        Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
+                        Model.DynamoDBField.prefectureName: .s(prefectureName)
                     ],
                     tableName: Model.tableName
                 )
@@ -135,7 +129,6 @@ struct MPrefectureController: DynamoDBController {
 extension MPrefectureController {
     func add(
         month: String,
-        dayOfTheWeek: String,
         prefectureName: String,
         positive: String,
         peopleTested: String,
@@ -150,7 +143,7 @@ extension MPrefectureController {
                 .init(
                     key: [
                         Model.DynamoDBField.month: .s(month),
-                        Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
+                        Model.DynamoDBField.prefectureName: .s(prefectureName)
                     ],
                     tableName: Model.tableName
                 )
@@ -159,7 +152,6 @@ extension MPrefectureController {
                 if let _ = output.item {
                     return update(
                         month: month,
-                        dayOfTheWeek: dayOfTheWeek,
                         prefectureName: prefectureName,
                         positive: positive,
                         peopleTested: peopleTested,
@@ -172,7 +164,6 @@ extension MPrefectureController {
                 } else {
                     return create(
                         month: month,
-                        dayOfTheWeek: dayOfTheWeek,
                         prefectureName: prefectureName,
                         positive: positive,
                         peopleTested: peopleTested,

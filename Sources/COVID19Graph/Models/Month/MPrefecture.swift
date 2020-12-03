@@ -6,7 +6,6 @@ struct MPrefecture: DynamoDBModelWithTable {
     static let tableName: String = "m_prefectures"
     
     var month: String = ""
-    var dayOfTheWeek: String = ""
     var prefectureName: String = ""
     var positive: String = ""
     var peopleTested: String = ""
@@ -21,7 +20,6 @@ struct MPrefecture: DynamoDBModelWithTable {
     
     struct DynamoDBField {
         static let month = "month"
-        static let dayOfTheWeek = "day_of_the_week"
         static let prefectureName = "prefecture_name"
         static let positive = "positive"
         static let peopleTested = "people_tested"
@@ -44,14 +42,6 @@ extension MPrefecture {
             !month.isEmpty
         {
             self.month = month
-        }
-        
-        if
-            let dayOfTheWeekAtValue = dic[DynamoDBField.dayOfTheWeek],
-            case let .s(dayOfTheWeek) = dayOfTheWeekAtValue,
-            !dayOfTheWeek.isEmpty
-        {
-            self.dayOfTheWeek = dayOfTheWeek
         }
         
         if
@@ -144,9 +134,6 @@ extension MPrefecture {
         if !month.isEmpty {
             dic[DynamoDBField.month] = .s(month)
         }
-        if !dayOfTheWeek.isEmpty {
-            dic[DynamoDBField.dayOfTheWeek] = .s(dayOfTheWeek)
-        }
         if !prefectureName.isEmpty {
             dic[DynamoDBField.prefectureName] = .s(prefectureName)
         }
@@ -188,14 +175,14 @@ extension MPrefecture {
     static var attributeDefinitions: [DynamoDB.AttributeDefinition] {
         [
             .init(attributeName: DynamoDBField.month, attributeType: .s),
-            .init(attributeName: DynamoDBField.dayOfTheWeek, attributeType: .s),
+            .init(attributeName: DynamoDBField.prefectureName, attributeType: .s),
         ]
     }
     
     static var keySchema: [DynamoDB.KeySchemaElement] {
         [
             .init(attributeName: DynamoDBField.month, keyType: .hash),
-            .init(attributeName: DynamoDBField.dayOfTheWeek, keyType: .range),
+            .init(attributeName: DynamoDBField.prefectureName, keyType: .range),
         ]
     }
 }

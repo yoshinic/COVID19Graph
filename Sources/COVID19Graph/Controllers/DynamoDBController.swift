@@ -36,8 +36,8 @@ extension DynamoDBController {
                 billingMode: .provisioned,
                 keySchema: Model.keySchema,
                 provisionedThroughput: .init(
-                    readCapacityUnits: 5,
-                    writeCapacityUnits: 5
+                    readCapacityUnits: 25,
+                    writeCapacityUnits: 25
                 ),
                 streamSpecification: .init(
                     streamEnabled: true,

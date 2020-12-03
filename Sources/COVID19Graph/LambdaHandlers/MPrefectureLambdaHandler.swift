@@ -19,22 +19,23 @@ struct MPrefectureLambdaHandler: DynamoDBLambdaHandler {
     }
     
     func handle(context: Lambda.Context, event: In) -> EventLoopFuture<Out> {
-        context
-            .eventLoop
-            .makeSucceededFuture(event)
-            .map { $0.records }
-            .guard({ $0.count == 1 }, else: APIError.request)
-            .mapEachCompact { $0.change.newImage }
-            .mapEachCompact { $0[DownloadResult.DynamoDBField.message] }
-            .guard({ $0.count == 1 }, else: APIError.request)
+        mprefectureController
+            .createTable(on: context.eventLoop)
             .flatMap { _ in prefectureController.all() }
             .mapEachCompact {
                 guard let date = $0.date.toDate else { return nil }
-                let c = Calendar.default.dateComponents([.month, .weekday], from: date)
-                guard let month = c.month, let weekday = c.weekday else { return nil }
+                let c = Calendar.default.dateComponents([.year, .month, .day], from: date)
+                guard
+                    let year = c.year,
+                    let month = c.month,
+                    let day = c.day,
+                    
+                    // このファイルは累計データなので、月日が月末のデータのみ取得する
+                    Calendar.default.isLast(day, ofThe: (year, month))
+                
+                else { return nil }
                 return MPrefecture(
                     month: "\(month)",
-                    dayOfTheWeek: "\(weekday)",
                     prefectureName: $0.prefectureNameJ,
                     positive: $0.positive,
                     peopleTested: $0.peopleTested,

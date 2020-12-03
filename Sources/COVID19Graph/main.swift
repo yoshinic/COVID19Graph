@@ -6,6 +6,8 @@ struct LambdaHandler {
         switch type.lowercased() {
         case "download":
             Lambda.run(DownloadLambdaHandler.init)
+        case "prefecture":
+            Lambda.run(MPrefectureLambdaHandler.init)
         case "website":
             Lambda.run(WebsiteLambdaHandler.init)
         default: break
