@@ -3,7 +3,7 @@ import NIO
 import SotoDynamoDB
 import AsyncKit
 
-struct EffectiveReproductionNumberController: DynamoDBController {
+struct EffectiveReproductionNumberController: DownloadController {
     typealias Model = EffectiveReproductionNumber
     
     let db: DynamoDB

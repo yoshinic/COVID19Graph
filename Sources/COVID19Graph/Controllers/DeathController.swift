@@ -3,7 +3,7 @@ import NIO
 import SotoDynamoDB
 import AsyncKit
 
-struct DeathController: DynamoDBController {
+struct DeathController: DownloadController {
     typealias Model = Death
     
     let db: DynamoDB

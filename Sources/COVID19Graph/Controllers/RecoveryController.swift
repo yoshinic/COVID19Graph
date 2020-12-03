@@ -3,7 +3,7 @@ import NIO
 import SotoDynamoDB
 import AsyncKit
 
-struct RecoveryController: DynamoDBController {
+struct RecoveryController: DownloadController {
     typealias Model = Recovery
     
     let db: DynamoDB

@@ -3,8 +3,8 @@ import NIO
 import SotoDynamoDB
 import AsyncKit
 
-struct PrefectureController: DownloadController {
-    typealias Model = Prefecture
+struct MPrefectureController: DynamoDBController {
+    typealias Model = MPrefecture
     
     let db: DynamoDB
     
@@ -13,14 +13,14 @@ struct PrefectureController: DownloadController {
     }
     
     func get(
-        _ date: String,
-        _ prefectureNameJ: String
+        _ month: String,
+        _ dayOfTheWeek: String
     ) -> EventLoopFuture<Model> {
         get(
             .init(
                 key: [
-                    Model.DynamoDBField.date: .s(date),
-                    Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
+                    Model.DynamoDBField.month: .s(month),
+                    Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
                 ],
                 tableName: Model.tableName
             )
@@ -28,9 +28,9 @@ struct PrefectureController: DownloadController {
     }
     
     func create(
-        date: String,
-        prefectureNameJ: String,
-        prefectureNameE: String,
+        month: String,
+        dayOfTheWeek: String,
+        prefectureName: String,
         positive: String,
         peopleTested: String,
         hospitalized: String,
@@ -41,9 +41,9 @@ struct PrefectureController: DownloadController {
     ) -> EventLoopFuture<Model> {
         create(
             .init(
-                date: date,
-                prefectureNameJ: prefectureNameJ,
-                prefectureNameE: prefectureNameE,
+                month: month,
+                dayOfTheWeek: dayOfTheWeek,
+                prefectureName: prefectureName,
                 positive: positive,
                 peopleTested: peopleTested,
                 hospitalized: hospitalized,
@@ -56,9 +56,9 @@ struct PrefectureController: DownloadController {
     }
     
     func update(
-        date: String,
-        prefectureNameJ: String,
-        prefectureNameE: String,
+        month: String,
+        dayOfTheWeek: String,
+        prefectureName: String,
         positive: String,
         peopleTested: String,
         hospitalized: String,
@@ -69,7 +69,7 @@ struct PrefectureController: DownloadController {
     ) -> EventLoopFuture<Model> {
         let input = DynamoDB.UpdateItemInput(
             expressionAttributeNames: [
-                "#prefectureNameE": Model.DynamoDBField.prefectureNameE,
+                "#prefectureName": Model.DynamoDBField.prefectureName,
                 "#positive": Model.DynamoDBField.positive,
                 "#peopleTested": Model.DynamoDBField.peopleTested,
                 "#hospitalized": Model.DynamoDBField.hospitalized,
@@ -80,7 +80,7 @@ struct PrefectureController: DownloadController {
                 "#updatedAt": Model.DynamoDBField.updatedAt
             ],
             expressionAttributeValues: [
-                ":prefectureNameE": .s(prefectureNameE),
+                ":prefectureName": .s(prefectureName),
                 ":positive": .s(positive),
                 ":peopleTested": .s(peopleTested),
                 ":hospitalized": .s(hospitalized),
@@ -91,14 +91,14 @@ struct PrefectureController: DownloadController {
                 ":updatedAt": .s(Date().iso8601)
             ],
             key: [
-                Model.DynamoDBField.date: .s(date),
-                Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
+                Model.DynamoDBField.month: .s(month),
+                Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
             ],
             returnValues: .allNew,
             tableName: Model.tableName,
             updateExpression: """
                 SET \
-                #prefectureNameE = :prefectureNameE, \
+                #prefectureName = :prefectureName, \
                 #positive = :positive, \
                 #peopleTested = :peopleTested, \
                 #hospitalized = :hospitalized, \
@@ -110,19 +110,19 @@ struct PrefectureController: DownloadController {
             """
         )
         
-        return db.updateItem(input).flatMap { _ in self.get(date, prefectureNameJ) }
+        return db.updateItem(input).flatMap { _ in self.get(month, dayOfTheWeek) }
     }
     
     func delete(
-        _ date: String,
-        _ prefectureNameJ: String
+        _ month: String,
+        _ dayOfTheWeek: String
     ) -> EventLoopFuture<Void> {
         db
             .deleteItem(
                 .init(
                     key: [
-                        Model.DynamoDBField.date: .s(date),
-                        Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
+                        Model.DynamoDBField.month: .s(month),
+                        Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
                     ],
                     tableName: Model.tableName
                 )
@@ -132,11 +132,11 @@ struct PrefectureController: DownloadController {
 }
 
 // 新規 or 更新を判断してから保存
-extension PrefectureController {
+extension MPrefectureController {
     func add(
-        date: String,
-        prefectureNameJ: String,
-        prefectureNameE: String,
+        month: String,
+        dayOfTheWeek: String,
+        prefectureName: String,
         positive: String,
         peopleTested: String,
         hospitalized: String,
@@ -149,8 +149,8 @@ extension PrefectureController {
             .getItem(
                 .init(
                     key: [
-                        Model.DynamoDBField.date: .s(date),
-                        Model.DynamoDBField.prefectureNameJ: .s(prefectureNameJ)
+                        Model.DynamoDBField.month: .s(month),
+                        Model.DynamoDBField.dayOfTheWeek: .s(dayOfTheWeek)
                     ],
                     tableName: Model.tableName
                 )
@@ -158,9 +158,9 @@ extension PrefectureController {
             .flatMap { output in
                 if let _ = output.item {
                     return update(
-                        date: date,
-                        prefectureNameJ: prefectureNameJ,
-                        prefectureNameE: prefectureNameE,
+                        month: month,
+                        dayOfTheWeek: dayOfTheWeek,
+                        prefectureName: prefectureName,
                         positive: positive,
                         peopleTested: peopleTested,
                         hospitalized: hospitalized,
@@ -171,9 +171,9 @@ extension PrefectureController {
                     )
                 } else {
                     return create(
-                        date: date,
-                        prefectureNameJ: prefectureNameJ,
-                        prefectureNameE: prefectureNameE,
+                        month: month,
+                        dayOfTheWeek: dayOfTheWeek,
+                        prefectureName: prefectureName,
                         positive: positive,
                         peopleTested: peopleTested,
                         hospitalized: hospitalized,
@@ -184,45 +184,5 @@ extension PrefectureController {
                     )
                 }
             }
-    }
-}
-
-extension PrefectureController {
-    func add(_ a: [String]) -> EventLoopFuture<Prefecture> {
-        add(
-            date: "\(a[0])-\(a[1])-\(a[2])",
-            prefectureNameJ: a[3],
-            prefectureNameE: a[4],
-            positive: a[5],
-            peopleTested: a[6],
-            hospitalized: a[7],
-            serious: a[8],
-            discharged: a[9],
-            deaths: a[10],
-            effectiveReproductionNumber: a[11]
-        )
-    }
-}
-
-extension PrefectureController {
-    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]> {
-        batch(
-            a.map {
-                Model(
-                    date: "\($0[0])-\($0[1])-\($0[2])",
-                    prefectureNameJ: $0[3],
-                    prefectureNameE: $0[4],
-                    positive: $0[5],
-                    peopleTested: $0[6],
-                    hospitalized: $0[7],
-                    serious: $0[8],
-                    discharged: $0[9],
-                    deaths: $0[10],
-                    effectiveReproductionNumber: $0[11]
-                )
-            },
-            batchMaximumValue: batchMaximumAllowedValue,
-            waittime: 1
-        )
     }
 }

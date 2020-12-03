@@ -3,7 +3,7 @@ import NIO
 import SotoDynamoDB
 import AsyncKit
 
-struct SeverityController: DynamoDBController {
+struct SeverityController: DownloadController {
     typealias Model = Severity
     
     let db: DynamoDB

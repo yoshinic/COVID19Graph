@@ -3,7 +3,7 @@ import NIO
 import SotoDynamoDB
 import AsyncKit
 
-struct PCRPositiveController: DynamoDBController {
+struct PCRPositiveController: DownloadController {
     typealias Model = PCRPositive
     
     let db: DynamoDB

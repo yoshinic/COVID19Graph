@@ -41,3 +41,7 @@ extension DynamoDBLambdaHandler {
         )
     }
 }
+
+extension DynamoDBLambdaHandler {
+    var ok: String { "OK" }
+}

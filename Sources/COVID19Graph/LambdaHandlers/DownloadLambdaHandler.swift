@@ -36,6 +36,8 @@ struct DownloadLambdaHandler: DynamoDBLambdaHandler {
     let recoveryController: RecoveryController
     let severityController: SeverityController
     
+    let downloadResultController: DownloadResultController
+    
     init(context: Lambda.InitializationContext) {
         let db = Self.createDynamoDBClient(on: context.eventLoop)
         
@@ -49,6 +51,8 @@ struct DownloadLambdaHandler: DynamoDBLambdaHandler {
         self.prefectureController = .init(db: db)
         self.recoveryController = .init(db: db)
         self.severityController = .init(db: db)
+        
+        self.downloadResultController = .init(db: db)
     }
     
     func handle(context: Lambda.Context, event: In) -> EventLoopFuture<Out> {
@@ -62,10 +66,12 @@ struct DownloadLambdaHandler: DynamoDBLambdaHandler {
             .flatMap { _handle(prefectureController, event.prefecture, on: context.eventLoop) }
             .flatMap { _handle(recoveryController, event.recovery, on: context.eventLoop) }
             .flatMap { _handle(severityController, event.severity, on: context.eventLoop) }
-            .transform(to: .init(result: "OK!"))
+            .flatMap { downloadResultController.createTable(on: context.eventLoop) }
+            .flatMap { _ in downloadResultController.add(message: ok) }
+            .transform(to: .init(result: "\(ok)!"))
     }
     
-    private func _handle<T: DynamoDBController>(
+    private func _handle<T: DownloadController>(
         _ controller: T,
         _ url: String,
         on eventLoop: EventLoop

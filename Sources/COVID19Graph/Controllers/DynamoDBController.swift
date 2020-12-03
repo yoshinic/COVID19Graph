@@ -7,8 +7,6 @@ protocol DynamoDBController {
     var db: DynamoDB { get }
     init(db: DynamoDB)
     func createTable(_ ifNotExists: Bool, on eventLoop: EventLoop) -> EventLoopFuture<DynamoDB.CreateTableOutput?>
-    func add(_ a: [String]) -> EventLoopFuture<Model>
-    func batch(_ a: [[String]]) -> EventLoopFuture<[DynamoDB.BatchWriteItemOutput]>
 }
 
 // Create Table
@@ -138,5 +136,14 @@ extension DynamoDBController {
                 }
             }
         }
+    }
+}
+
+extension DynamoDBController {
+    func all() -> EventLoopFuture<[Model]> {
+        db
+            .scan(.init(tableName: Model.tableName))
+            .map { $0.items ?? [] }
+            .flatMapEachThrowing { try .init(dic: $0) }
     }
 }
