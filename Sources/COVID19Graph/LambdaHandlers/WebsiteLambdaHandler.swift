@@ -19,8 +19,7 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
     typealias In = WebsiteInput
     typealias Out = WebsiteOutput
     
-    let deathController: DeathController
-    let prefectureController: PrefectureController
+    let mprefectureController: MPrefectureController
     
     let prefectureMaster: [PrefectureID: String] = [
         0: "北海道", 1: "青森県", 2: "岩手県", 3: "宮城県", 4: "秋田県", 5: "山形県", 6: "福島県", 7: "茨城県",
@@ -33,31 +32,38 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
     
     init(context: Lambda.InitializationContext) {
         let db = Self.createDynamoDBClient(on: context.eventLoop)
-        self.deathController = .init(db: db)
-        self.prefectureController = .init(db: db)
+        self.mprefectureController = .init(db: db)
     }
     
     func handle(context: Lambda.Context, event: In) -> EventLoopFuture<Out> {
-        prefectureController
+        mprefectureController
             .db
-            .scan(.init(tableName: Prefecture.tableName))
+            .scan(.init(tableName: MPrefecture.tableName))
             .map { $0.items ?? [] }
-            .flatMapEachThrowing { try Prefecture(dic: $0) }
-            .mapEach { (d: Prefecture) -> PrefectureData in
-                PrefectureData(
-                    date: d.date.filledDateString,
-                    prefectureID: prefectureMaster.first { $0.value == d.prefectureNameJ }?.key ?? -1,
-                    positive: Int(d.positive) ?? -1,
-                    peopleTested: Int(d.peopleTested) ?? -1,
-                    hospitalized: Int(d.hospitalized) ?? -1,
-                    serious: Int(d.serious) ?? -1,
-                    discharged: Int(d.discharged) ?? -1,
-                    deaths: Int(d.deaths) ?? -1,
-                    effectiveReproductionNumber: Int(d.effectiveReproductionNumber) ?? -1
-                )
-            }
-            .map { $0.sorted { $0.date < $1.date } }
+            .flatMapEachThrowing { try MPrefecture(dic: $0) }
             .map {
+                var a: [[MPrefectureData]] = []
+                (0..<12).forEach { _ in a.append([]) }
+                (0..<prefectureMaster.count).forEach { _ in
+                    (0..<12).forEach {
+                        a[$0].append(MPrefectureData(0, 0, 0, 0, 0, 0, 0))
+                    }
+                }
+                
+                return $0.reduce(into: a) { (_a, d) in
+                    let month = Int(d.month) ?? 0
+                    let prefectureID = prefectureMaster.first { $0.value == d.prefectureName }?.key ?? 0
+                    _a[month][prefectureID].positive = Int(d.positive) ?? 0
+                    _a[month][prefectureID].peopleTested = Int(d.peopleTested) ?? 0
+                    _a[month][prefectureID].hospitalized = Int(d.hospitalized) ?? 0
+                    _a[month][prefectureID].serious = Int(d.serious) ?? 0
+                    _a[month][prefectureID].discharged = Int(d.discharged) ?? 0
+                    _a[month][prefectureID].deaths = Int(d.deaths) ?? 0
+                    _a[month][prefectureID].effectiveReproductionNumber = Int(d.effectiveReproductionNumber) ?? 0
+                }
+            }
+            .map { WebsiteData(prefectureMaster: prefectureMaster, data: $0) }
+            .map { (a: WebsiteData) -> WebsiteOutput in
                 .init(
                     statusCode: .ok,
                     headers: [
@@ -66,55 +72,34 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
                         "Access-Control-Allow-Methods": "GET",
                         "Access-Control-Allow-Credentials": "true",
                     ],
-                    body: "\($0)"
+                    body: "\(a)"
                 )
             }
-        
-        
-        
-        //        deathController
-        //            .db
-        //            .scan(.init(tableName: Death.tableName))
-        //            .map { $0.items ?? [] }
-        //            .flatMapEachThrowing { try Death(dic: $0) }
-        //            .mapEach { (date: $0.date.filledDateString, number: $0.number) }
-        //            .map { $0.sorted { $0.date < $1.date } }
-//            .map { script($0) }
-//            .map {
-//                .init(
-//                    statusCode: .ok,
-//                    headers: [
-//                        "Content-Type": "text/html",
-//                        "Access-Control-Allow-Origin": "*",
-//                        "Access-Control-Allow-Methods": "GET",
-//                        "Access-Control-Allow-Credentials": "true",
-//                    ],
-//                    body: html($0)
-//                )
-//            }
     }
 }
 
 extension WebsiteLambdaHandler {
     private var myChartID: String { "myChart" }
     
-    private func script(_ data: [(date: String, number: String)]) -> String {
+    private func script(_ d: WebsiteData) -> String {
         """
-        var ctx = document.getElementById('\(myChartID)').getContext('2d');
-        var chart = new Chart(ctx, {
+        const data = \(d.data)
+
+        const ctx = document.getElementById('\(myChartID)').getContext('2d');
+        const chart = new Chart(ctx, {
             // The type of chart we want to create
             type: 'line',
 
             // The data for our dataset
             data: {
-                labels: [\(data.map { "'\($0.date)'" }.joined(separator: ", "))],
+                labels: [],
                 datasets: [
                     {
                         label: '新型コロナウイルスによる死亡者数',
                         pointRadius: 0,
                         fill: false,
                         borderColor: 'rgb(255, 99, 132)',
-                        data: [\(data.map { $0.number }.joined(separator: ", "))]
+                        data: []
                     }
                 ]
             },
@@ -160,19 +145,35 @@ extension WebsiteLambdaHandler {
     }
 }
 
-struct WebsiteContext: Codable {
+struct WebsiteData: Codable {
     let prefectureMaster: [PrefectureID: String]
-    let data: PrefectureData
+    let data: [[MPrefectureData]]   // 月別、都道府県別
 }
 
-struct PrefectureData: Codable {
-    let date: String
-    let prefectureID: PrefectureID
-    let positive: Int
-    let peopleTested: Int
-    let hospitalized: Int
-    let serious: Int
-    let discharged: Int
-    let deaths: Int
-    let effectiveReproductionNumber: Int
+struct MPrefectureData: Codable {
+    var positive: Int
+    var peopleTested: Int
+    var hospitalized: Int
+    var serious: Int
+    var discharged: Int
+    var deaths: Int
+    var effectiveReproductionNumber: Int
+    
+    init(
+        _ positive: Int,
+        _ peopleTested: Int,
+        _ hospitalized: Int,
+        _ serious: Int,
+        _ discharged: Int,
+        _ deaths: Int,
+        _ effectiveReproductionNumber: Int
+    ) {
+        self.positive = positive
+        self.peopleTested = peopleTested
+        self.hospitalized = hospitalized
+        self.serious = serious
+        self.discharged = discharged
+        self.deaths = deaths
+        self.effectiveReproductionNumber = effectiveReproductionNumber
+    }
 }
