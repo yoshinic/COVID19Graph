@@ -142,8 +142,9 @@ extension DynamoDBController {
 extension DynamoDBController {
     func all() -> EventLoopFuture<[Model]> {
         db
-            .scan(.init(tableName: Model.tableName))
-            .map { $0.items ?? [] }
+            .scanPaginator(.init(tableName: Model.tableName), []) {
+                $2.future(($1.lastEvaluatedKey != nil, $0 + ($1.items ?? [])))
+            }
             .flatMapEachThrowing { try .init(dic: $0) }
     }
 }
