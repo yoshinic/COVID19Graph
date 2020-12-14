@@ -47,7 +47,19 @@ extension WebsiteLambdaHandler {
                 const ctx = document.getElementById('\(myChartID)').getContext('2d');
         
                 const configs = {
-                    type: 'line',
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: '新型コロナウイルスの現状',
+                    },
+                    layout: {
+                        padding: {
+                            left: 20,
+                            right: 20,
+                            top: 20,
+                            bottom: 20
+                        }
+                    },
                     scales: {
                         xAxes: [
                             {
@@ -56,24 +68,42 @@ extension WebsiteLambdaHandler {
                                     // autoSkipPadding: 40,
                                     maxTicksLimit: 20,
                                 },
+                                offset: true,
                             },
                         ],
                         yAxes: [
                             {
+                                id: "\(y1)",
+                                type: "linear",
+                                position: "left",
                                 ticks: {
                                     beginAtZero: true
                                 }
+                            },
+                            {
+                                id: "\(y2)",
+                                type: "linear",
+                                position: "right",
+                                ticks: {
+                                    beginAtZero: true
+                                },
+                                gridLines: {
+                                    drawOnChartArea: false,
+                                },
                             }
                         ]
                     }
                 };
 
-                const mychart = new Chart(ctx, configs);
+                const mychart = new Chart(ctx, {
+                    type: 'line',
+                    options: configs
+                });
                 mychart.data.labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
                 
                 // labels: グラフごとのラベル
                 // a: 元データ（月別、都道府県別、アイテム別（入院、死亡者数など））
-                function getDatasets(isNew, selectedPrefectures, selectedItems) {
+                function getDatasets(isNew, selectedPrefectures, selectedItems, yAxisID) {
                     // 新規
                     if (isNew) {
                         return selectedPrefectures.map((i) => {
@@ -81,12 +111,26 @@ extension WebsiteLambdaHandler {
                                 const _a = [...Array(data.length).keys()].map((k) => {
                                     return (k == 0 ? data[k][i][j] : data[k][i][j] - data[k - 1][i][j])
                                 });
-                                return {
-                                    label: prefectures[i] + 'の' + items[j],
-                                    pointRadius: 0,
-                                    fill: false,
-                                    borderColor: `rgb(${random()}, ${random()}, ${random()})`,
-                                    data: _a
+                                if (yAxisID == '\(y1)') {
+                                    return {
+                                        type: 'line',
+                                        label: prefectures[i] + 'の' + items[j],
+                                        pointRadius: 0,
+                                        fill: false,
+                                        borderColor: `rgb(${random()}, ${random()}, ${random()})`,
+                                        data: _a,
+                                        yAxisID: yAxisID
+                                    }
+                                } else {
+                                    return {
+                                        type: 'bar',
+                                        label: prefectures[i] + 'の' + items[j],
+                                        fill: true,
+                                        borderColor: `rgb(${random()}, ${random()}, ${random()})`,
+                                        backgroundColor: `rgb(${random()}, ${random()}, ${random()}, 0.2)`,
+                                        data: _a,
+                                        yAxisID: yAxisID
+                                    }
                                 }
                             });
                         })
@@ -98,12 +142,26 @@ extension WebsiteLambdaHandler {
                                 const _a = [...Array(data.length).keys()].map((k) => {
                                     return data[k][i][j];
                                 });
-                                return {
-                                    label: prefectures[i] + 'の' + items[j],
-                                    pointRadius: 0,
-                                    fill: false,
-                                    borderColor: `rgb(${random()}, ${random()}, ${random()})`,
-                                    data: _a
+                                if (yAxisID == '\(y1)') {
+                                    return {
+                                        type: 'line',
+                                        label: prefectures[i] + 'の' + items[j],
+                                        pointRadius: 0,
+                                        fill: false,
+                                        borderColor: `rgb(${random()}, ${random()}, ${random()})`,
+                                        data: _a,
+                                        yAxisID: yAxisID
+                                    }
+                                } else {
+                                    return {
+                                        type: 'bar',
+                                        label: prefectures[i] + 'の' + items[j],
+                                        fill: true,
+                                        borderColor: `rgb(${random()}, ${random()}, ${random()})`,
+                                        backgroundColor: `rgb(${random()}, ${random()}, ${random()}, 0.2)`,
+                                        data: _a,
+                                        yAxisID: yAxisID
+                                    }
                                 }
                             });
                         })
@@ -112,15 +170,19 @@ extension WebsiteLambdaHandler {
                 }
 
                 function update() {
-                    const isNew = (getRadioValue('\(newOrTotalRadioName)') == 0 ? true : false)
-                    const selectedPrefectures = getCheckBoxValue('\(prefectureCheckBoxName)')
-                    const selectedItem = getCheckBoxValue('\(itemCheckBoxName)')
-                    updateChart(isNew, selectedPrefectures, selectedItem);
+                    const isNewL = (getRadioValue('\(newOrTotalRadioNameL)') == 0 ? true : false)
+                    const selectedPrefecturesL = getCheckBoxValue('\(prefectureCheckBoxNameL)')
+                    const selectedItemL = getCheckBoxValue('\(itemCheckBoxNameL)')
+                    const isNewR = (getRadioValue('\(newOrTotalRadioNameR)') == 0 ? true : false)
+                    const selectedPrefecturesR = getCheckBoxValue('\(prefectureCheckBoxNameR)')
+                    const selectedItemR = getCheckBoxValue('\(itemCheckBoxNameR)')
+                    updateChart(isNewL, selectedPrefecturesL, selectedItemL, isNewR, selectedPrefecturesR, selectedItemR);
                 }
 
-                function updateChart(isNew, selectedPrefectures, selectedItem) {
-                    const d = getDatasets(isNew, selectedPrefectures, selectedItem);
-                    mychart.data.datasets = d;
+                function updateChart(isNewL, selectedPrefecturesL, selectedItemL, isNewR, selectedPrefecturesR, selectedItemR) {
+                    const dl = getDatasets(isNewL, selectedPrefecturesL, selectedItemL, '\(y1)');
+                    const dr = getDatasets(isNewR, selectedPrefecturesR, selectedItemR, '\(y2)');
+                    mychart.data.datasets = dl.concat(dr);
                     mychart.update();
                 }
                 
@@ -158,37 +220,64 @@ extension WebsiteLambdaHandler {
     }
     
     private var myChartID: String { "myChart" }
-    private var newOrTotalRadioName: String { "newOrTotalRadio" }
-    private var prefectureCheckBoxName: String { "prefectureCheckBox" }
-    private var itemCheckBoxName: String { "itemCheckBox" }
     
-    private func modal(_ prefectures: [String], _ items: [String]) -> String {
-        let prefectures = prefectures.enumerated().map {
-            let s = "<input type=\"checkbox\" name=\"\(prefectureCheckBoxName)\" value=\"\($0.offset)\">\($0.element)"
-            return $0.offset > 0 && $0.offset % 5 == 0 ? s + "<br>" : s
+    private var y1: String { "y1" }
+    private var y2: String { "y2" }
+    
+    private var newOrTotalRadioNameL: String { "newOrTotalRadioL" }
+    private var prefectureCheckBoxNameL: String { "prefectureCheckBoxL" }
+    private var itemCheckBoxNameL: String { "itemCheckBoxL" }
+    
+    private var newOrTotalRadioNameR: String { "newOrTotalRadioR" }
+    private var prefectureCheckBoxNameR: String { "prefectureCheckBoxR" }
+    private var itemCheckBoxNameR: String { "itemCheckBoxR" }
+    
+    private func modal(
+        _ prefectures: [String],
+        _ items: [String]
+    ) -> String {
+        let f = { (rn: String, pn: String, in: String) -> String in
+            let prefectures = prefectures.enumerated().map {
+                let s = "<input type=\"checkbox\" name=\"\(pn)\" value=\"\($0.offset)\">\($0.element)"
+                return $0.offset > 0 && $0.offset % 5 == 0 ? s + "<br>" : s
+            }
+            .joined(separator: "\n")
+            
+            let items = items.enumerated().map {
+                let s = "<input type=\"checkbox\" name=\"\(`in`)\" value=\"\($0.offset)\">\($0.element)"
+                return $0.offset > 0 && $0.offset % 3 == 0 ? s + "<br>" : s
+            }
+            .joined(separator: "\n")
+            
+            return """
+                <p>
+                    <input type="radio" name="\(rn)" value="0" checked="checked">新規
+                    <input type="radio" name="\(rn)" value="1">累計
+                </p>
+                
+                <p>＊都道府県</p>
+                \(prefectures)
+                
+                <p>＊項目</p>
+                \(items)
+            """
         }
-        .joined(separator: "\n")
-        let items = items.enumerated().map {
-            let s = "<input type=\"checkbox\" name=\"\(itemCheckBoxName)\" value=\"\($0.offset)\">\($0.element)"
-            return $0.offset > 0 && $0.offset % 3 == 0 ? s + "<br>" : s
-        }
-        .joined(separator: "\n")
         
         return
             """
             <div style="display: none;" id="hidden-content">
-                <p>表示データ選択</p>
+                <h3>表示データ選択</h3>
+                
+                <p>== 左側Y軸 ==</p>
+                \(f(newOrTotalRadioNameL, prefectureCheckBoxNameL, itemCheckBoxNameL))
+                
+                <br><hr><hr><br>
 
-                <p>
-                    <input type="radio" name="\(newOrTotalRadioName)" value="0" checked="checked">新規
-                    <input type="radio" name="\(newOrTotalRadioName)" value="1">累計
-                </p>
+                <p>== 右側Y軸 ==</p>
+                \(f(newOrTotalRadioNameR, prefectureCheckBoxNameR, itemCheckBoxNameR))
+                    
+                <br><br><br>
 
-                <p>都道府県</p>
-                \(prefectures)
-
-                <p>項目</p>
-                \(items)
                 <div>
                     <button data-fancybox-close onclick="update();">決定</button>
                     <button data-fancybox-close>キャンセル</button>
