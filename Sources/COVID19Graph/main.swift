@@ -4,6 +4,8 @@ struct LambdaHandler {
     static func run() {
         guard let type = Lambda.env("TYPE") else { return }
         switch type.lowercased() {
+        case "table":
+            Lambda.run(TableLambdaHandler.init)
         case "download":
             Lambda.run(DownloadLambdaHandler.init)
         case "prefecture":
