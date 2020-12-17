@@ -6,30 +6,37 @@ protocol DynamoDBController {
     associatedtype Model: DynamoDBModelWithTable
     var db: DynamoDB { get }
     init(db: DynamoDB)
-    func createTable(_ ifNotExists: Bool, on eventLoop: EventLoop) -> EventLoopFuture<DynamoDB.CreateTableOutput?>
+    func createTable(
+        _ ifNotExists: Bool,
+        _ useStream: Bool,
+        on eventLoop: EventLoop
+    ) -> EventLoopFuture<DynamoDB.CreateTableOutput?>
 }
 
 // Create Table
 extension DynamoDBController {
     func createTable(
         _ ifNotExists: Bool,
+        _ useStream: Bool,
         on eventLoop: EventLoop
     ) -> EventLoopFuture<DynamoDB.CreateTableOutput?> {
-        guard ifNotExists else { return _createTable().map { $0 } }
+        guard ifNotExists else { return _createTable(useStream).map { $0 } }
         return db
             .listTables(.init())
             .flatMap {
                 guard let a = $0.tableNames, a.contains(Model.tableName)
-                else { return _createTable().map { $0 } }
+                else { return _createTable(useStream).map { $0 } }
                 return eventLoop.next().makeSucceededFuture(nil)
             }
     }
     
-    func createTable(on eventLoop: EventLoop) -> EventLoopFuture<DynamoDB.CreateTableOutput?> {
-        createTable(true, on: eventLoop)
+    func createTable(
+        on eventLoop: EventLoop
+    ) -> EventLoopFuture<DynamoDB.CreateTableOutput?> {
+        createTable(true, false, on: eventLoop)
     }
     
-    private func _createTable() -> EventLoopFuture<DynamoDB.CreateTableOutput> {
+    private func _createTable(_ useStream: Bool) -> EventLoopFuture<DynamoDB.CreateTableOutput> {
         db.createTable(
             .init(
                 attributeDefinitions: Model.attributeDefinitions,
@@ -39,10 +46,10 @@ extension DynamoDBController {
                     readCapacityUnits: 25,
                     writeCapacityUnits: 25
                 ),
-                streamSpecification: .init(
-                    streamEnabled: true,
+                streamSpecification: useStream ? .init(
+                    streamEnabled: useStream,
                     streamViewType: .newImage
-                ),
+                ) : nil,
                 tableName: Model.tableName
             )
         )

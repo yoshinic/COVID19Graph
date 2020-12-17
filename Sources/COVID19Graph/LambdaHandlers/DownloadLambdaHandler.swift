@@ -66,7 +66,7 @@ struct DownloadLambdaHandler: DynamoDBLambdaHandler {
             .flatMap { _handle(prefectureController, event.prefecture, on: context.eventLoop) }
             .flatMap { _handle(recoveryController, event.recovery, on: context.eventLoop) }
             .flatMap { _handle(severityController, event.severity, on: context.eventLoop) }
-            .flatMap { downloadResultController.createTable(on: context.eventLoop) }
+            .flatMap { downloadResultController.createTable(true, true, on: context.eventLoop) }
             .flatMap { _ in downloadResultController.add(message: "OK!") }
             .transform(to: .init(result: "OK!"))
     }
