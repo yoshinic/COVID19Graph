@@ -72,57 +72,96 @@
 
 # 全体の動き
 
-1. 検索用 URL にリクエスト
-
-このあとは DynamoDB Stream により動きが２つに分かれる 
-
-2. 応答が返ってきたら、検索用 URL とページ番号を取得した「 search_parameters 」テーブルに保存。
-
-    4. 2 の保存をトリガーとして、次のページ URL にリクエスト
-
-    5. 2, 4 を繰り返して、スクレイピング対象 URL が無ければ終了
-
-3. 検索結果 URL を「 url_store 」に保存
-
-    6. 3 の保存をトリガーとして、スクレイピング対象 URL にリクエスト
-
-    7. 取得した HTML をパースして Race or Horse 構造体として 「 races 」or 「 horses 」テーブルに 保存
-
 <br>
 
 # 使用方法
 
-1. Labmda 関数を AWS Lambda に設定
+## ローカルPCでの作業
 
-    - DownloadLambdaHandler：
+### AWS Lambda用の zip ファイルを作成する
+
+1. このプロジェクトをクローン
+
+2. cd （プロジェクトディレクトリに移動）
+
+3. AWS Lambda 用にコンパイル
+
+    - docker run --rm --volume "$(pwd)/:/src" --workdir "/src/" swift-lambda-builder swift build --product COVID19Graph -c release
+
+    - プロジェクト名は任意
+
+4. zip ファイルの作成
+
+    - docker run --rm --volume "$(pwd)/:/src" --workdir "/src/" swift-lambda-builder scripts/package.sh COVID19Graph
+
+    - プロジェクト名は 3 に合わせる
+
+<br>
+
+## AWS コンソール上での操作
+
+### グラフ表示のためのデータを作成
+
+5. Lambda関数を作成
+
+    - 必要な関数は４つ
+
+    - TableLambdaHandler に対応：
+
+        - データ作成、グラフ表示に必要な DynamoDB テーブルを作成する関数
+
+        - TYPE = table
+
+    - DownloadLambdaHandler に対応：
+
         - グラフ表示に使用するCSVデータをDynamoDBに保存する関数
+
         - タイムアウトを１５分で設定
+
         - メモリは128M
 
-    - MPrefectureLambdaHandler：
+        - TYPE = download
+
+        - リクエストパラメータの設定
+
+    - MPrefectureLambdaHandler に対応：
+
         - DownloadLambdaHandlerで保存したDynamoDBデータを、さらにグラフ表示用にデータを作成して、DynamoDBに保存する関数
+
         - Result Model に対する DynamoDB Strean Trigger として設定
+
         - タイムアウト３分
+
         - メモリは256M
 
-    - WebsiteLambdaHandler:
+        - TYPE = prefecture
+
+    - WebsiteLambdaHandler に対応:
+
         - グラフ表示API関数
+
         - ユーザーからのリクエストに対してグラフ表示用HTMLをレスポンスとして返す
+
         - タイムアウト１０秒
+
         - メモリは128M
 
-2. 設定した Lambda 関数に環境変数を設定
+        - TYPE = website
 
-    - ACCESS_KEY_ID：Lambda 関数、DynamoDB を使用するユーザーID
+    - 全ての Lambda 関数共通で、環境変数を４つ設定
 
-    - SECRET_ACCESS_KEY：ユーザーのパスワード
+        - ACCESS_KEY_ID：Lambda 関数、DynamoDB を使用するユーザーID
 
-    - REGION：AWS の地域。
+        - SECRET_ACCESS_KEY：ユーザーのパスワード
 
-3. Result Table を作成する。
+        - REGION：AWS の地域。
 
-    DynamoDB Stream の Trigger を設定する必要があるため、手動で行う。
+        - TYPE: （上記の値）
 
-4. WebsiteLambdaHandler に設定したLambda関数に対して API を作成
+6. 作成した zip ファイルを AWS にアップロード
 
-5. DownloadLambdaHandlerに対して設定した Lambda 関数で
+7. results テーブルに mprefecture 関数をトリガーとして設定
+
+8. Lambda 関数の table 関数を実行
+
+9. テーブルが作成されたのを確認して Lambda 関数のdownload 関数を実行

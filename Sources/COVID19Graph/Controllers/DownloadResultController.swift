@@ -1,7 +1,5 @@
 import Foundation
-import NIO
 import SotoDynamoDB
-import AsyncKit
 
 struct DownloadResultController: DynamoDBController {
     typealias Model = DownloadResult

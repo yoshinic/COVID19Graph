@@ -1,8 +1,7 @@
 import Foundation
 import AWSLambdaRuntime
-import AsyncHTTPClient
-import NIO
-import SotoDynamoDB
+import AWSLambdaEvents
+import SotoCore
 
 struct Input: Codable {
     let death: String

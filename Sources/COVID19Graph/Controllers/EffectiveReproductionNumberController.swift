@@ -1,7 +1,5 @@
 import Foundation
-import NIO
 import SotoDynamoDB
-import AsyncKit
 
 struct EffectiveReproductionNumberController: DownloadController {
     typealias Model = EffectiveReproductionNumber

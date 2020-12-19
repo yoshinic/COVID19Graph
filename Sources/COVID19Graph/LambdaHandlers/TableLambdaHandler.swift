@@ -1,8 +1,6 @@
 import Foundation
 import AWSLambdaRuntime
-import AsyncHTTPClient
-import NIO
-import SotoDynamoDB
+import SotoCore
 
 struct MakeTableInput: Codable {
     
@@ -54,6 +52,10 @@ struct TableLambdaHandler: DynamoDBLambdaHandler {
             .flatMap { _ in recoveryController.createTable(on: context.eventLoop) }
             .flatMap { _ in severityController.createTable(on: context.eventLoop) }
             .flatMap { _ in downloadResultController.createTable(true, true, on: context.eventLoop) }
+            
+            // テーブル作成にかかる時間 sleep
+            .map { _ in sleep(15) }
+            
             .transform(to: .init(result: "OK!"))
     }
 }

@@ -1,5 +1,4 @@
 import Foundation
-import NIO
 import SotoDynamoDB
 
 protocol DownloadController: DynamoDBController {
