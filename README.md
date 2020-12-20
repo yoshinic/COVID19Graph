@@ -1,33 +1,35 @@
 # COVID19Graph
  
- 新型コロナウイルスについてのデータをグラフ化します。
+新型コロナウイルスについてのデータをグラフ化します。
 
- データは下記のものを利用させて頂いています。
+<br>
+
+データは下記のものを利用させて頂いています。
  
- - 東洋経済オンライン「新型コロナウイルス 国内感染の状況」制作：荻原和樹
+- 東洋経済オンライン「新型コロナウイルス 国内感染の状況」制作：荻原和樹
 
- - [GitHubのソースコード](https://github.com/kaz-ogiwara/covid19/)
+- [GitHubのソースコード](https://github.com/kaz-ogiwara/covid19/)
 
 <br>
 
 # 主な機能
 
->#### 事前設定
+>#### 必須
 >- AWS Lambda へ関数登録する必要があります。
 >
->- DynamoDB の設定によってはうまく動作しません。
+>- DynamoDB の設定の仕方で、うまく動作しない場合があります。
 
-- 上記サイトから、新型コロナに関する各CSVファイルのデータをAmazon DynamoDBへ保存する。
+- 新型コロナに関する各CSVファイルのデータを上記サイトからダウンロードし、Amazon DynamoDB へ保存します。
 
-- 保存したDynamoDBデータを、さらにグラフ表示用データに変換して保存する。
+- 保存したDynamoDBデータを、さらにグラフ表示用データに変換して保存します。
 
 - グラフ表示用APIの作成
 
-    - 月別・都道府県別・項目別のデータをグラフとして表示できます。
+    - 月別・都道府県別・項目別のデータをグラフとして表示します。
 
 # 環境
  
-- Swift 5.2 以上
+- Swift 5.3 以上
 
 - Amazon DynamoDB
 
@@ -39,38 +41,72 @@
 
 ├── Sources
 <br>
+<br>
 │   └── COVID19Graph
 <br>
-│       ├── Controllers（ModelをDynamoDBに対して操作）
 <br>
-│       ├── LambdaHandlers（AWS Lamda関数群）
+│       ├── Controllers
 <br>
-│       │   ├── DownloadLambdaHandler.swift（上記サイトのCSVファイルをDynamoDBへ保存）
+&emsp;&emsp;&emsp;&ensp;
+（ModelのDynamoDBに対する操作）
 <br>
-│       │   ├── DynamoDBLambdaHandler.swift（各LambdaHandler用のprotocol）
 <br>
-│       │   ├── MPrefectureLambdaHandler.swift（グラフ表示用のDynamoDBデータを保存）
+│       ├── LambdaHandlers
 <br>
-│       │   ├── WebsiteLambdaHandler.swift（グラフ表示API用関数）
+&emsp;&emsp;&emsp;&ensp;
+（AWS Lamda関数群）
 <br>
-│       │   └── WebsiteLambdaHandler+HTML.swift（グラフ表示API用のHTML作成箇所）
 <br>
-│       ├── Models（各CSVデータをDynamoDB用に定義しモデル化）
+│       │   ├── DownloadLambdaHandler.swift
+<br>
+&emsp;&emsp;&emsp;&emsp;&ensp;
+（上記サイトのCSVファイルをDynamoDBへ保存）
+<br>
+<br>
+│       │   ├── DynamoDBLambdaHandler.swift
+<br>
+&emsp;&emsp;&emsp;&emsp;&ensp;
+（各LambdaHandler用のprotocol）
+<br>
+<br>
+│       │   ├── MPrefectureLambdaHandler.swift
+<br>
+&emsp;&emsp;&emsp;&emsp;&ensp;
+（グラフ表示用のDynamoDBデータを保存）
+<br>
+<br>
+│       │   ├── WebsiteLambdaHandler.swift
+<br>
+&emsp;&emsp;&emsp;&emsp;&ensp;
+（グラフ表示API用関数）
+<br>
+<br>
+│       │   └── WebsiteLambdaHandler+HTML.swift
+<br>
+&emsp;&emsp;&emsp;&emsp;&ensp;
+（グラフ表示API用のHTML作成箇所）
+<br>
+<br>
+│       ├── Models
+<br>
+&emsp;&emsp;&emsp;&ensp;
+（各CSVデータをDynamoDB用に定義しモデル化）
+<br>
 <br>
 │       ├── Utilities
 <br>
+<br>
 │       └── main.swift
+<br>
 <br>
 ├── Tests
 <br>
+<br>
 └── scripts
+<br>
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;
 └── package.sh（AWS LambdaでSwiftを動作させるためのスクリプト）
-
-<br>
-
-# 全体の動き
 
 <br>
 
