@@ -41,158 +41,161 @@
 
 ├── Sources
 <br>
-<br>
 │   └── COVID19Graph
-<br>
 <br>
 │       ├── Controllers
 <br>
 &emsp;&emsp;&emsp;&ensp;
 （ModelのDynamoDBに対する操作）
 <br>
-<br>
 │       ├── LambdaHandlers
 <br>
 &emsp;&emsp;&emsp;&ensp;
 （AWS Lamda関数群）
-<br>
 <br>
 │       │   ├── DownloadLambdaHandler.swift
 <br>
 &emsp;&emsp;&emsp;&emsp;&ensp;
 （上記サイトのCSVファイルをDynamoDBへ保存）
 <br>
-<br>
 │       │   ├── DynamoDBLambdaHandler.swift
 <br>
 &emsp;&emsp;&emsp;&emsp;&ensp;
 （各LambdaHandler用のprotocol）
-<br>
 <br>
 │       │   ├── MPrefectureLambdaHandler.swift
 <br>
 &emsp;&emsp;&emsp;&emsp;&ensp;
 （グラフ表示用のDynamoDBデータを保存）
 <br>
-<br>
 │       │   ├── WebsiteLambdaHandler.swift
 <br>
 &emsp;&emsp;&emsp;&emsp;&ensp;
 （グラフ表示API用関数）
-<br>
 <br>
 │       │   └── WebsiteLambdaHandler+HTML.swift
 <br>
 &emsp;&emsp;&emsp;&emsp;&ensp;
 （グラフ表示API用のHTML作成箇所）
 <br>
-<br>
 │       ├── Models
 <br>
 &emsp;&emsp;&emsp;&ensp;
 （各CSVデータをDynamoDB用に定義しモデル化）
 <br>
-<br>
 │       ├── Utilities
-<br>
 <br>
 │       └── main.swift
 <br>
-<br>
 ├── Tests
-<br>
 <br>
 └── scripts
 <br>
-<br>
 &nbsp;&nbsp;&nbsp;&nbsp;
-└── package.sh（AWS LambdaでSwiftを動作させるためのスクリプト）
+└── package.sh
+<br>
+&emsp;&emsp;&emsp;&ensp;
+（AWS LambdaでSwiftを動作させるためのスクリプト）
 
 <br>
 
 # 使用方法
 
-## ローカルPCでの作業
+### # ローカルPCでの作業
 
-### AWS Lambda用の zip ファイルを作成する
+#### ・ AWS Lambda用の zip ファイルを作成
 
-1. このプロジェクトをクローン
+1. このプロジェクトをローカルPCにクローン
 
-2. cd （プロジェクトディレクトリに移動）
+    git clone https://github.com/yoshiswift/COVID19Graph.git
+
+2. cd COVID19Graph
 
 3. AWS Lambda 用にコンパイル
 
     - docker run --rm --volume "$(pwd)/:/src" --workdir "/src/" swift-lambda-builder swift build --product COVID19Graph -c release
 
-    - プロジェクト名は任意
-
-4. zip ファイルの作成
+4. Swift ファイル群の zip を作成
 
     - docker run --rm --volume "$(pwd)/:/src" --workdir "/src/" swift-lambda-builder scripts/package.sh COVID19Graph
 
-    - プロジェクト名は 3 に合わせる
-
 <br>
 
-## AWS コンソール上での操作
+### # AWS コンソール上での操作
 
-### グラフ表示のためのデータを作成
+#### ・ グラフ表示のためのデータを作成
 
-5. Lambda関数を作成
+5. AWS Lambda関数を作成
 
     - 必要な関数は４つ
 
-    - TableLambdaHandler に対応：
+    - それぞれの関数に
 
-        - データ作成、グラフ表示に必要な DynamoDB テーブルを作成する関数
+        - タイムアウト
+        
+        - 使用メモリ量
+        
+        - 環境変数
 
-        - TYPE = table
+        を設定
 
-    - DownloadLambdaHandler に対応：
-
-        - グラフ表示に使用するCSVデータをDynamoDBに保存する関数
-
-        - タイムアウトを１５分で設定
-
-        - メモリは128M
-
-        - TYPE = download
-
-        - リクエストパラメータの設定
-
-    - MPrefectureLambdaHandler に対応：
-
-        - DownloadLambdaHandlerで保存したDynamoDBデータを、さらにグラフ表示用にデータを作成して、DynamoDBに保存する関数
-
-        - Result Model に対する DynamoDB Strean Trigger として設定
-
-        - タイムアウト３分
-
-        - メモリは256M
-
-        - TYPE = prefecture
-
-    - WebsiteLambdaHandler に対応:
-
-        - グラフ表示API関数
-
-        - ユーザーからのリクエストに対してグラフ表示用HTMLをレスポンスとして返す
-
-        - タイムアウト１０秒
-
-        - メモリは128M
-
-        - TYPE = website
-
-    - 全ての Lambda 関数共通で、環境変数を４つ設定
+    - 環境変数は次の４つを設定
 
         - ACCESS_KEY_ID：Lambda 関数、DynamoDB を使用するユーザーID
 
         - SECRET_ACCESS_KEY：ユーザーのパスワード
 
-        - REGION：AWS の地域。
+        - REGION：AWS の地域
 
-        - TYPE: （上記の値）
+        - TYPE: 実行する関数を決定
+
+        <br>
+
+    - TableLambdaHandler に対応する関数：
+
+        - データ作成、グラフ表示に必要な DynamoDB テーブルを作成する関数
+
+        - タイムアウト：10秒
+
+        - メモリ：128M
+
+        - TYPE = table
+
+    - DownloadLambdaHandler に対応する関数：
+
+        - グラフ表示に使用するCSVデータをDynamoDBに保存する関数
+
+        - タイムアウト：１５分
+
+        - メモリ：128M
+
+        - TYPE = download
+
+        - CSV ファイルの URL をリクエストパラメータで設定
+
+    - MPrefectureLambdaHandler に対応する関数：
+
+        - DownloadLambdaHandler で保存したDynamoDB データを、さらにグラフ表示用にデータを作成して、DynamoDBに保存する関数
+
+        - results テーブルに対する DynamoDB Stream Trigger として設定
+
+        - タイムアウト：３分
+
+        - メモリ：256M
+
+        - TYPE = prefecture
+
+    - WebsiteLambdaHandler に対応する関数:
+
+        - グラフ表示API関数
+
+        - ユーザーからのリクエストに対してグラフ表示用HTMLをレスポンスとして返す
+
+        - タイムアウト：１０秒
+
+        - メモリ：128M
+
+        - TYPE = website
 
 6. 作成した zip ファイルを AWS にアップロード
 
@@ -201,3 +204,5 @@
 8. Lambda 関数の table 関数を実行
 
 9. テーブルが作成されたのを確認して Lambda 関数のdownload 関数を実行
+
+10. API を作成
