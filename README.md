@@ -127,7 +127,7 @@
 
 5. AWS Lambda関数を作成
 
-    - 必要な関数は４つ
+    - 必要な関数は 4 つ
 
     - それぞれの関数に
 
@@ -139,7 +139,7 @@
 
         を設定
 
-    - 環境変数は次の４つを設定
+    - 環境変数は次の 4 つを設定
 
         - ACCESS_KEY_ID：Lambda 関数、DynamoDB を使用するユーザーID
 
@@ -155,9 +155,9 @@
 
         - データ作成、グラフ表示に必要な DynamoDB テーブルを作成する関数
 
-        - タイムアウト：10秒
+        - タイムアウト：10 秒
 
-        - メモリ：128M
+        - メモリ：128 M
 
         - TYPE = table
 
@@ -165,13 +165,33 @@
 
         - グラフ表示に使用するCSVデータをDynamoDBに保存する関数
 
-        - タイムアウト：１５分
+        - タイムアウト：15 分
 
-        - メモリ：128M
+        - メモリ：128 M
 
         - TYPE = download
 
-        - CSV ファイルの URL をリクエストパラメータで設定
+        - CSV ファイルの URL をリクエストパラメータで設定（変更される可能性あり）
+
+            - "death": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/death_total.csv"
+
+            - "demography": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/demography.csv"
+            
+            - "ern": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/effective_reproduction_number.csv"
+
+            - "hospitalization": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/cases_total.csv"
+
+            - "pcrCase": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/pcr_case_daily.csv"
+
+            - "pcrPositive": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/pcr_positive_daily.csv"
+
+            - "pcrTest": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/pcr_tested_daily.csv"
+
+            - "prefecture": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/prefectures.csv"
+
+            - "recovery": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/recovery_total.csv"
+
+            - "severity": "https://raw.githubusercontent.com/kaz-ogiwara/covid19/master/data/severe_daily.csv"
 
     - MPrefectureLambdaHandler に対応する関数：
 
@@ -179,9 +199,9 @@
 
         - results テーブルに対する DynamoDB Stream Trigger として設定
 
-        - タイムアウト：３分
+        - タイムアウト：3 分
 
-        - メモリ：256M
+        - メモリ：256 M
 
         - TYPE = prefecture
 
@@ -191,9 +211,9 @@
 
         - ユーザーからのリクエストに対してグラフ表示用HTMLをレスポンスとして返す
 
-        - タイムアウト：１０秒
+        - タイムアウト：10 秒
 
-        - メモリ：128M
+        - メモリ：128 M
 
         - TYPE = website
 
