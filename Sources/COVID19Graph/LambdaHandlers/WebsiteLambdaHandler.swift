@@ -36,6 +36,9 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
         "退院・療養解除", "死亡者数", //"実効再生産数",
     ]
     
+    let startYear: Int = 2020
+    let startMonth: Int = 1
+    
     init(context: Lambda.InitializationContext) {
         let db = Self.createDynamoDBClient(on: context.eventLoop)
         self.mprefectureController = .init(db: db)
@@ -45,27 +48,37 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
         mprefectureController
             .all()
             .map {
-                var a: [[[Int]]] = []
-                (0..<12).forEach { _ in a.append([]) }
-                (0..<12).forEach { i in
-                    (0..<prefectureMaster.count).forEach { _ in a[i].append([]) }
-                }
-                (0..<12).forEach { i in
-                    (0..<prefectureMaster.count).forEach { j in
-                        (0..<itemMaster.count).forEach { _ in a[i][j].append(0) }
+                $0.reduce(into: [[[Int]]]()) { (_a, d) in
+                    let year = Int(d.ym.prefix(4)) ?? 0
+                    let month = Int(d.ym.suffix(2)) ?? 0
+                    let ym = (year - startYear) * 12 + month - startMonth
+                    guard ym > 0 else { return }
+                    
+                    if _a.count <= ym {
+                        let x = ym - _a.count + 1
+                        (0..<x).forEach { _ in _a.append([]) }
+                        (0..<x).forEach { i in
+                            if _a[i].count == 0 {
+                                (0..<prefectureMaster.count).forEach { _ in _a[i].append([]) }
+                            }
+                        }
+                        (0..<x).forEach { i in
+                            (0..<prefectureMaster.count).forEach { j in
+                                if _a[i][j].count == 0 {
+                                    (0..<itemMaster.count).forEach { _ in _a[i][j].append(0) }
+                                }
+                            }
+                        }
                     }
-                }
-                
-                return $0.reduce(into: a) { (_a, d) in
-                    let month = (Int(d.month) ?? 0) - 1
+                    
                     let prefectureID = prefectureMaster.firstIndex(of: d.prefectureName) ?? 0
-                    _a[month][prefectureID][0] = Int(d.positive) ?? 0
-                    _a[month][prefectureID][1] = Int(d.peopleTested) ?? 0
-                    _a[month][prefectureID][2] = Int(d.hospitalized) ?? 0
-                    _a[month][prefectureID][3] = Int(d.serious) ?? 0
-                    _a[month][prefectureID][4] = Int(d.discharged) ?? 0
-                    _a[month][prefectureID][5] = Int(d.deaths) ?? 0
-//                    _a[month][prefectureID][6] = Int(d.effectiveReproductionNumber) ?? 0
+                    _a[ym][prefectureID][0] = Int(d.positive) ?? 0
+                    _a[ym][prefectureID][1] = Int(d.peopleTested) ?? 0
+                    _a[ym][prefectureID][2] = Int(d.hospitalized) ?? 0
+                    _a[ym][prefectureID][3] = Int(d.serious) ?? 0
+                    _a[ym][prefectureID][4] = Int(d.discharged) ?? 0
+                    _a[ym][prefectureID][5] = Int(d.deaths) ?? 0
+//                    _a[ym][prefectureID][6] = Int(d.effectiveReproductionNumber) ?? 0
                 }
             }
             .map { WebsiteData(prefectureMaster: prefectureMaster, itemMaster: itemMaster, data: $0) }
@@ -87,5 +100,5 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
 struct WebsiteData: Codable {
     let prefectureMaster: [String]
     let itemMaster: [String]
-    let data: [[[Int]]]   // 月別、都道府県別、アイテム別
+    let data: [[[Int]]]   // 年月別、都道府県別、アイテム別
 }

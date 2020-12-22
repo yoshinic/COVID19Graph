@@ -1,7 +1,18 @@
+import Foundation
+
 extension WebsiteLambdaHandler {
     func html(_ data: WebsiteData) -> String {
         let prefectures = "[" + data.prefectureMaster.map { "'\($0)'" }.joined(separator: ",") + "]"
         let items = "[" + data.itemMaster.map { "'\($0)'" }.joined(separator: ",") + "]"
+        
+        let startDate: Date = Calendar.default.date(from: DateComponents(year: startYear, month: startMonth, day: 1))!
+        let ymString = (0..<data.data.count)
+            .map { Calendar.default.date(byAdding: .month, value: $0, to: startDate)! }
+            .map { Calendar.default.dateComponents([.year, .month], from: $0) }
+            .map { "'\($0.year!)-\($0.month!)'" }
+            .joined(separator: ",")
+        let labels = "[" + ymString + "]"
+        
         let dataArray = "[" +
             data.data.map {
                 "[\($0.map {"[\($0.map { "\($0)" }.joined(separator: ","))]" }.joined(separator: ",\n"))]"
@@ -106,8 +117,7 @@ extension WebsiteLambdaHandler {
                     type: 'line',
                     options: configs
                 });
-                mychart.data.labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-                
+                mychart.data.labels = \(labels);
                 // labels: グラフごとのラベル
                 // a: 元データ（月別、都道府県別、アイテム別（入院、死亡者数など））
                 function getDatasets(isNew, selectedPrefectures, selectedItems, yAxisID) {

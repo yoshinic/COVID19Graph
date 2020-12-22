@@ -5,7 +5,7 @@ struct MPrefecture: DynamoDBModelWithTable {
     
     static let tableName: String = "m_prefectures"
     
-    var month: String = ""
+    var ym: String = ""
     var prefectureName: String = ""
     var positive: String = ""
     var peopleTested: String = ""
@@ -19,7 +19,7 @@ struct MPrefecture: DynamoDBModelWithTable {
     var updatedAt: Date?
     
     struct DynamoDBField {
-        static let month = "month"
+        static let ym = "ym"
         static let prefectureName = "prefecture_name"
         static let positive = "positive"
         static let peopleTested = "people_tested"
@@ -37,11 +37,11 @@ struct MPrefecture: DynamoDBModelWithTable {
 extension MPrefecture {
     init(dic: [String: DynamoDB.AttributeValue]) throws {
         if
-            let monthAtValue = dic[DynamoDBField.month],
-            case let .s(month) = monthAtValue,
-            !month.isEmpty
+            let ymAtValue = dic[DynamoDBField.ym],
+            case let .s(ym) = ymAtValue,
+            !ym.isEmpty
         {
-            self.month = month
+            self.ym = ym
         }
         
         if
@@ -131,8 +131,8 @@ extension MPrefecture {
     var dynamoDbDictionary: [String: DynamoDB.AttributeValue] {
         var dic: [String: DynamoDB.AttributeValue] = [:]
         
-        if !month.isEmpty {
-            dic[DynamoDBField.month] = .s(month)
+        if !ym.isEmpty {
+            dic[DynamoDBField.ym] = .s(ym)
         }
         if !prefectureName.isEmpty {
             dic[DynamoDBField.prefectureName] = .s(prefectureName)
@@ -174,14 +174,14 @@ extension MPrefecture {
 extension MPrefecture {
     static var attributeDefinitions: [DynamoDB.AttributeDefinition] {
         [
-            .init(attributeName: DynamoDBField.month, attributeType: .s),
+            .init(attributeName: DynamoDBField.ym, attributeType: .s),
             .init(attributeName: DynamoDBField.prefectureName, attributeType: .s),
         ]
     }
     
     static var keySchema: [DynamoDB.KeySchemaElement] {
         [
-            .init(attributeName: DynamoDBField.month, keyType: .hash),
+            .init(attributeName: DynamoDBField.ym, keyType: .hash),
             .init(attributeName: DynamoDBField.prefectureName, keyType: .range),
         ]
     }

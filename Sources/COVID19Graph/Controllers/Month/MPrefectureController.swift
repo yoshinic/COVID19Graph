@@ -13,13 +13,13 @@ struct MPrefectureController: DynamoDBController {
     }
     
     func get(
-        _ month: String,
+        _ ym: String,
         _ prefectureName: String
     ) -> EventLoopFuture<Model> {
         get(
             .init(
                 key: [
-                    Model.DynamoDBField.month: .s(month),
+                    Model.DynamoDBField.ym: .s(ym),
                     Model.DynamoDBField.prefectureName: .s(prefectureName)
                 ],
                 tableName: Model.tableName
@@ -28,7 +28,7 @@ struct MPrefectureController: DynamoDBController {
     }
     
     func create(
-        month: String,
+        ym: String,
         prefectureName: String,
         positive: String,
         peopleTested: String,
@@ -40,7 +40,7 @@ struct MPrefectureController: DynamoDBController {
     ) -> EventLoopFuture<Model> {
         create(
             .init(
-                month: month,
+                ym: ym,
                 prefectureName: prefectureName,
                 positive: positive,
                 peopleTested: peopleTested,
@@ -54,7 +54,7 @@ struct MPrefectureController: DynamoDBController {
     }
     
     func update(
-        month: String,
+        ym: String,
         prefectureName: String,
         positive: String,
         peopleTested: String,
@@ -86,7 +86,7 @@ struct MPrefectureController: DynamoDBController {
                 ":updatedAt": .s(Date().iso8601)
             ],
             key: [
-                Model.DynamoDBField.month: .s(month),
+                Model.DynamoDBField.ym: .s(ym),
                 Model.DynamoDBField.prefectureName: .s(prefectureName)
             ],
             returnValues: .allNew,
@@ -104,18 +104,18 @@ struct MPrefectureController: DynamoDBController {
             """
         )
         
-        return db.updateItem(input).flatMap { _ in self.get(month, prefectureName) }
+        return db.updateItem(input).flatMap { _ in self.get(ym, prefectureName) }
     }
     
     func delete(
-        _ month: String,
+        _ ym: String,
         _ prefectureName: String
     ) -> EventLoopFuture<Void> {
         db
             .deleteItem(
                 .init(
                     key: [
-                        Model.DynamoDBField.month: .s(month),
+                        Model.DynamoDBField.ym: .s(ym),
                         Model.DynamoDBField.prefectureName: .s(prefectureName)
                     ],
                     tableName: Model.tableName
@@ -128,7 +128,7 @@ struct MPrefectureController: DynamoDBController {
 // 新規 or 更新を判断してから保存
 extension MPrefectureController {
     func add(
-        month: String,
+        ym: String,
         prefectureName: String,
         positive: String,
         peopleTested: String,
@@ -142,7 +142,7 @@ extension MPrefectureController {
             .getItem(
                 .init(
                     key: [
-                        Model.DynamoDBField.month: .s(month),
+                        Model.DynamoDBField.ym: .s(ym),
                         Model.DynamoDBField.prefectureName: .s(prefectureName)
                     ],
                     tableName: Model.tableName
@@ -151,7 +151,7 @@ extension MPrefectureController {
             .flatMap { output in
                 if let _ = output.item {
                     return update(
-                        month: month,
+                        ym: ym,
                         prefectureName: prefectureName,
                         positive: positive,
                         peopleTested: peopleTested,
@@ -163,7 +163,7 @@ extension MPrefectureController {
                     )
                 } else {
                     return create(
-                        month: month,
+                        ym: ym,
                         prefectureName: prefectureName,
                         positive: positive,
                         peopleTested: peopleTested,
