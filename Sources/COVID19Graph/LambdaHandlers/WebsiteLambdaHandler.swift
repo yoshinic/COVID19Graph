@@ -52,18 +52,13 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
                     guard ym > 0 else { return }
                     
                     if _a.count <= ym {
-                        let x = ym - _a.count + 1
-                        (0..<x).forEach { _ in _a.append([]) }
-                        (0..<x).forEach { i in
-                            if _a[i].count == 0 {
-                                (0..<prefectureMaster.count).forEach { _ in _a[i].append([]) }
-                            }
-                        }
-                        (0..<x).forEach { i in
+                        let oldCount = _a.count
+                        let newCount = ym + 1
+                        (oldCount..<newCount).forEach { i in
+                            _a.append([])
                             (0..<prefectureMaster.count).forEach { j in
-                                if _a[i][j].count == 0 {
-                                    (0..<itemMaster.count).forEach { _ in _a[i][j].append(0) }
-                                }
+                                _a[i].append([])
+                                (0..<itemMaster.count).forEach { _ in _a[i][j].append(0) }
                             }
                         }
                     }
