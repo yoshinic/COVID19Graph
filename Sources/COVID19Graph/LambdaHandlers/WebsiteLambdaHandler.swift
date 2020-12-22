@@ -3,9 +3,6 @@ import AWSLambdaRuntime
 import AWSLambdaEvents
 import NIO
 
-typealias PrefectureID = Int
-typealias ItemID = Int
-
 struct WebsiteInput: Codable {
     
 }
