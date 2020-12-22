@@ -82,7 +82,8 @@ extension WebsiteLambdaHandler {
                                 type: "linear",
                                 position: "left",
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true,
+                                    min: 0
                                 }
                             },
                             {
@@ -90,7 +91,8 @@ extension WebsiteLambdaHandler {
                                 type: "linear",
                                 position: "right",
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true,
+                                    min: 0
                                 },
                                 gridLines: {
                                     drawOnChartArea: false,

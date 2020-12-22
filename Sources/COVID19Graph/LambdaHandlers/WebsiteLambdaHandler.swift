@@ -33,7 +33,7 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
     
     private let itemMaster: [String] = [
         "検査陽性者数", "PCR検査人数", "入院治療等を要する者", "重症者数",
-        "退院・療養解除", "死亡者数", "実効再生産数",
+        "退院・療養解除", "死亡者数", //"実効再生産数",
     ]
     
     init(context: Lambda.InitializationContext) {
@@ -65,7 +65,7 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
                     _a[month][prefectureID][3] = Int(d.serious) ?? 0
                     _a[month][prefectureID][4] = Int(d.discharged) ?? 0
                     _a[month][prefectureID][5] = Int(d.deaths) ?? 0
-                    _a[month][prefectureID][6] = Int(d.effectiveReproductionNumber) ?? 0
+//                    _a[month][prefectureID][6] = Int(d.effectiveReproductionNumber) ?? 0
                 }
             }
             .map { WebsiteData(prefectureMaster: prefectureMaster, itemMaster: itemMaster, data: $0) }
