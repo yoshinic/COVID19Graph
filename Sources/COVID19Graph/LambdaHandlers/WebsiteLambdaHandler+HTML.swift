@@ -31,6 +31,11 @@ extension WebsiteLambdaHandler {
             <canvas id="\(myChartID)"></canvas>
             
             \(modal(data.prefectureMaster, data.itemMaster))
+            
+            <br>
+            データは下記のものを利用させて頂いています。
+            <p>東洋経済オンライン「新型コロナウイルス 国内感染の状況」制作：荻原和樹</p>
+            <a href="https://github.com/kaz-ogiwara/covid19/">GitHubのソースコード</a>
 
             <!-- Chart.js -->
             <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
