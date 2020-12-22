@@ -57,7 +57,7 @@ struct WebsiteLambdaHandler: DynamoDBLambdaHandler {
                 }
                 
                 return $0.reduce(into: a) { (_a, d) in
-                    let month = Int(d.month) ?? 0
+                    let month = (Int(d.month) ?? 0) - 1
                     let prefectureID = prefectureMaster.firstIndex(of: d.prefectureName) ?? 0
                     _a[month][prefectureID][0] = Int(d.positive) ?? 0
                     _a[month][prefectureID][1] = Int(d.peopleTested) ?? 0
